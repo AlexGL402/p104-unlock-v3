@@ -1,3 +1,5 @@
+<h2><strong>2026-11-01: Due to current technical limitations, physical x16 on the P104 is not achievable at this time; this project will be on an extended hiatus for further exploration.</strong></h2>
+
 # P104-100: PCIe Gen2 x4 unlock + x16 width declaration (Windows, full open source)
 
 [中文](README.zh-CN.md) | **English**
@@ -176,7 +178,6 @@ stable (measured: 6 min 40 s with zero drops).
 
 ## Credits
 
-- **WJNKAC** for the Linux-side analysis (`LnkCap2` bit semantics, `LnkCtl2` clamping, CUDA-init down-speed);
 - Users of the old v1.6 (Gen2 x4) release for feedback;
 - Authors of the open drivers/toolchain (WinRing0, ThrottleStop);
 - Everyone in the community who explored P104/P106 PCIe unlocking first.
