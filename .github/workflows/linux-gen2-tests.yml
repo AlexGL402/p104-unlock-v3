@@ -1,0 +1,11 @@
+name: Linux staged experiment (no GPU)
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  unittest:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m unittest discover -s tests -v
+      - run: python3 -m py_compile p104_gen2_linux.py tests/test_linux_gen2.py
