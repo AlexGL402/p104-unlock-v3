@@ -119,7 +119,12 @@ but it is not enough to declare another direct SPEED write safe. A combined writ
 is a research candidate, **not** a workaround certified by source code. It needs
 its own future review and permission; the offline proposal does not produce it.
 
-## Minimal next experiment proposal: internal same-speed control
+## Deferred proposal: internal same-speed control
+
+**Observability review now blocks a hardware executor:** see
+[the passive-observation review](linux-observability-review.md). Existing 50 ms
+polling cannot distinguish ignored from executed/missed same-speed commands.
+The following is a design candidate, not a recommendation to run it now.
 
 First test the unexercised internal request path **without changing SPEED**:
 
