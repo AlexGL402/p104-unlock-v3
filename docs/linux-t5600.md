@@ -6,7 +6,9 @@ LNKCAP2 did not appear within two seconds. Stage 2 was not run, GPU 1 was unchan
 The user subsequently ran `stage1-override`: all three readbacks matched, GPU
 LNKCAP2 changed 2→6 immediately after 8841C, but LNKCAP stayed Gen1 and both links
 stayed Gen1 x4. The script stopped at `inconsistent_capability`, without Link Down.
-The new `stage1-cap-speed` has only offline validation. No hardware operations were
+The user subsequently confirmed cap-speed success independently with lspci: GPU
+capability is Gen2 x4, root capability Gen3 x16, both actual links Gen1 x4.
+The new `stage2-cap-retrain` has only offline validation. No hardware operations were
 performed by the development agent.
 No VBIOS/EFI/driver installation changes, startup service, automatic rebind,
 reset, width arm, recovery writes, or background holder are implemented.
@@ -285,6 +287,119 @@ No TLS, retrain, reset, bind, CUDA, background hold, startup task or automatic
 prefix preparation is part of this mode. GPU 1, VBIOS and driver installation
 remain outside its scope.
 
+## New experiment: `stage2-cap-retrain` on GPU 0
+
+User-reported `stage1-cap-speed` result, independently checked with lspci: GPU
+LNKCAP=5 GT/s x4, LNKCAP2=2.5–5 GT/s; root LNKCAP=8 GT/s x16,
+LNKCAP2=2.5–8 GT/s; both actual links remain 2.5 GT/s x4. This is consistent
+capability, **not yet an actual Gen2 link**. GPU 0 remains unbound. The new mode
+has offline validation only and does not prepare any earlier stage.
+
+Source basis:
+
+- [Linux v6.8 `pcie_retrain_link()`](https://github.com/torvalds/linux/blob/v6.8/drivers/pci/pci.c):
+  check no existing Training before setting RL to avoid an LTSSM race, then observe
+  completion. This experiment aborts on pre-existing Training rather than waiting
+  and trying again. Linux has a device quirk for manually clearing RL; this tool
+  deliberately does not add that second write or other recovery behavior.
+- [PCIe register definitions](https://github.com/torvalds/linux/blob/v6.8/include/uapi/linux/pci_regs.h):
+  LNKCTL2 TLS bits 3:0, LNKCTL RL bit 5, LNKSTA Training bit 11, DLLLA bit 13.
+  Use **16-bit** config writes to preserve adjacent status/W1C fields.
+- [Nouveau GK104](https://github.com/torvalds/linux/blob/v6.8/drivers/gpu/drm/nouveau/nvkm/subdev/pci/gk104.c)
+  distinguishes cap-speed, TLS and a proprietary speed-change request. Its
+  `8C040` write/trigger path is not copied; this experiment tests whether standard
+  TLS plus a root RL is sufficient with the now-consistent capability.
+
+Strict baseline:
+
+| BAR0 offset | Required value |
+| --- | --- |
+| `8872C` | `00000006` |
+| `2241C` | `00000081` |
+| `8841C` | `C0B40500` |
+| `8C2C0` | `068711B3` |
+| `8C300` | `040A00C0` |
+| `8C040` | `20085800` |
+| `8C1C0` | `00020032` |
+| `88610` | `00000000` |
+
+GPU/root BDF and identity, topology, GPU absence of driver, D0, MSE=1/BME=0,
+idle Gen1 x4 at both ends are required. GPU capability must be exactly
+`LNKCAP=00453C42`, `LNKCAP2=6`. Root must have Root Port type, maximum Gen3 x16,
+supported-speed bits for Gen1/2/3, and DLLLA reporting with active DLL. Other root
+capability bits are captured and must remain unchanged. Missing/inaccessible AER
+on **either** end aborts, as do existing correctable/uncorrectable AER status,
+root error flags, Device Status error bits or Transactions Pending. Nothing is
+cleared to make preflight pass. Root Error Status interrupt-message-number bits
+are recorded, not mistaken for error flags.
+
+Read-only preflight and plan (this command has not been executed on hardware by
+the development agent):
+
+```sh
+sudo python3 p104_gen2_linux.py --mode stage2-cap-retrain --dry-run \
+  --log-dir work/t5600-cap-retrain-plan
+```
+
+After review of the plan and **separate explicit hardware authorization only**:
+
+```sh
+sudo python3 p104_gen2_linux.py --mode stage2-cap-retrain --apply \
+  --authorize-cap-retrain --confirm-bdf 0000:03:00.0 \
+  --log-dir work/t5600-cap-retrain
+```
+
+There is no automatic sequence from override/cap-speed modes. If power removal
+or another action lost the baseline, this mode refuses; preparation is a separate
+reviewed/authorized operation. Do not run the legacy `stage2` instead.
+
+Write order and limits:
+
+1. Recheck idle link, ownership, baseline and AER. Set GPU TLS=2 preserving all
+   other bits; full 16-bit readback. If already 2, omit the write.
+2. Recheck again. Set root TLS=2 preserving all other bits; full readback.
+3. Recheck both TLS=2 and no Training/RL/Link Disable, unchanged BAR0/capability
+   and no AER/counter delta. Write root LNKCTL with **only RL bit 5 added**, once.
+   No endpoint RL. The backend consumes the attempt even if the write errors and
+   denies every subsequent write after that trigger attempt.
+4. Read-only observation for at most a five-second monotonic window, polling at
+   50 ms intervals. Root is sampled first. While root LT=1, do not access endpoint
+   config or BAR0; record root status/AER/counters and continue read-only polling.
+   Once root LT clears, require DLL active before accessing the endpoint. Any
+   inaccessible device, Link Down after Training, width other than x4, unexpected
+   speed, capability/control change or AER/counter delta aborts immediately.
+5. Success requires **both** ends to stay Gen2 x4, Training clear and RL clear for
+   at least one second, with no detected errors. Only then read final BAR0 and
+   check it still equals the exact baseline; recheck both links/AER afterward.
+   A spontaneous proprietary-register change is recorded and aborts; it is never
+   corrected. Gen1 or stuck Training at timeout ends negatively, with no retry.
+
+LTSSM observability is deliberately limited: standard Training/DLLLA are the
+live proxies. Read-only `8C040[4]` (LTSSM_STATUS in envytools) must be idle before
+trigger and is recorded with final BAR0. This does **not** decode a complete
+proprietary LTSSM state machine; `8872C=6` is an override value, not an LTSSM state
+sample. No MMIO reads during root Training, and **no MMIO writes at any time**.
+There remains an unavoidable race between a config check and physical link loss.
+
+AER status is read, never cleared or masked. Available kernel `aer_dev_*` and
+root-total sysfs counters are snapshotted and compared as well; absent counter
+files are explicit empty maps, while hardware AER capability itself is mandatory.
+Polling cannot guarantee capture of every transient, especially where kernel
+counters are absent. The cooperating-process lock does not serialize firmware or
+kernel AER recovery; no kernel error-handling settings are changed by this tool.
+Synchronous config/MMIO/log fsync operations do not have hard real-time deadlines.
+
+Each run creates `gpu0-stage2-cap-retrain-<time_ns>.jsonl`: exact BAR0 baseline,
+per-port raw links, AER/device status and kernel counters, plan, durable TLS/RL
+intent and TLS readback, final BAR0, result or abort. Every row has mode/apply
+status. Read-only plans and failed experiments retain separate journals. An abort
+may leave TLS=2; no rollback, reset, bind or other recovery is attempted.
+
+Return the complete journal for review in every case. A positive result means
+only a short **unbound** Gen2 x4 observation, not CUDA/driver stability. This mode
+never binds the driver, runs CUDA, alters width, installs startup actions or
+accesses GPU 1. VBIOS and driver installation remain unchanged.
+
 ## Original two-switch procedure (user reported no latch; do not repeat)
 
 The following documents the original Stage 1/Stage 2 interface. It is not a
@@ -355,7 +470,7 @@ Attach JSONL and workload results to the PR; none are currently available.
 
 ```sh
 python3 -m unittest discover -s tests -v
-python3 -m py_compile p104_gen2_linux.py tests/test_linux_gen2.py tests/test_cap_speed.py
+python3 -m py_compile p104_gen2_linux.py tests/test_linux_gen2.py tests/test_cap_speed.py tests/test_cap_retrain.py
 ```
 
 Tests use injected config/BAR state, simulated time, and a fake CUDA library.

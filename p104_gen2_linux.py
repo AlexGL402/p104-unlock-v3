@@ -26,6 +26,8 @@ EXPECTED_BAR0 = {0x8872C: 0, 0x2241C: 0, 0x8841C: 0xC0B46500,
 EXPECTED_OVERRIDE_BAR0 = dict(EXPECTED_BAR0)
 for _off, _mask, _value in OVERRIDE_PATCHES:
     EXPECTED_OVERRIDE_BAR0[_off] = (EXPECTED_OVERRIDE_BAR0[_off] & ~_mask) | _value
+EXPECTED_CAP_BAR0 = dict(EXPECTED_OVERRIDE_BAR0)
+EXPECTED_CAP_BAR0[0x8C1C0] = 0x00020032
 
 
 class Stop(RuntimeError):
@@ -122,6 +124,218 @@ class Linux:
         if self.fd is not None:
             os.close(self.fd)
             self.fd = None
+
+
+class CapRetrainLinux(Linux):
+    """Config-only backend: two TLS words and at most one root RL word.
+
+    BAR0 is always PROT_READ. No reset, status/W1C, width, or other writes.
+    """
+    def __init__(self, writable=False):
+        super().__init__(writable=writable)
+        self.config_attempts = set()
+        self.retrain_attempted = False
+
+    def cfg_write(self, bdf, off, size, value):
+        if not self.writable or self.retrain_attempted or size != 2 or bdf not in (GPU, ROOT):
+            raise Stop('cap-retrain config write denied')
+        gc, rc = find_cap(self, GPU, 0x10), find_cap(self, ROOT, 0x10)
+        tls = {(GPU, gc + 0x30), (ROOT, rc + 0x30)}
+        key = (bdf, off)
+        old = self.cfg(bdf, off, 2)
+        if key in self.config_attempts:
+            raise Stop('cap-retrain write already attempted; no retry')
+        if key in tls:
+            if value != (old & ~15) | 2:
+                raise Stop('only TLS=2 preserving all other bits is allowed')
+        elif key == (ROOT, rc + 0x10):
+            if old & 0x30 or value != old | 0x20:
+                raise Stop('only one root Retrain Link bit is allowed')
+            if any(self.cfg(dev, cap + 0x30, 2) & 15 != 2
+                   for dev, cap in ((GPU, gc), (ROOT, rc))):
+                raise Stop('both TLS fields must be 2 before retrain')
+            if self.cfg(ROOT, rc + 0x12, 2) & 0x800:
+                raise Stop('root started training before trigger')
+            self.retrain_attempted = True
+        else:
+            raise Stop('cap-retrain config offset denied')
+        self.config_attempts.add(key)  # Consume even on an uncertain/failed write.
+        super().cfg_write(bdf, off, size, value)
+
+    def aer_stats(self, bdf):
+        names = ('aer_dev_correctable', 'aer_dev_nonfatal', 'aer_dev_fatal')
+        if bdf == ROOT:
+            names += ('aer_rootport_total_err_cor', 'aer_rootport_total_err_nonfatal',
+                      'aer_rootport_total_err_fatal')
+        return {name: (BASE / bdf / name).read_text() for name in names
+                if (BASE / bdf / name).exists()}
+
+
+def find_ext_cap(hw, bdf, ident):
+    ptr, seen = 0x100, set()
+    while ptr:
+        if ptr < 0x100 or ptr > 0xFFC or ptr % 4 or ptr in seen:
+            raise Stop('malformed PCI extended capability list')
+        seen.add(ptr)
+        header = hw.cfg(bdf, ptr, 4)
+        if header == 0:
+            break
+        if header & 0xFFFF == ident:
+            return ptr
+        ptr = header >> 20
+    raise Stop(f'required AER capability missing: {bdf}')
+
+
+class CapRetrain:
+    def __init__(self, exp):
+        self.exp, self.hw = exp, exp.hw
+        self.aer = {dev: find_ext_cap(self.hw, dev, 1) for dev in (ROOT, GPU)}
+        self.before = None
+        self.triggered = False
+
+    def port(self, dev):
+        cap = self.exp.rc if dev == ROOT else self.exp.gc
+        link = {name: self.hw.cfg(dev, cap + off, size)
+                for name, off, size in (('cap', 12, 4), ('sta', 18, 2),
+                                       ('cap2', 44, 4), ('ctl', 16, 2), ('ctl2', 48, 2))}
+        aer = self.aer[dev]
+        errors = {'uncor': self.hw.cfg(dev, aer + 4, 4),
+                  'cor': self.hw.cfg(dev, aer + 0x10, 4),
+                  'device_status': self.hw.cfg(dev, cap + 0xA, 2)}
+        if dev == ROOT:
+            errors['root_status'] = self.hw.cfg(dev, aer + 0x30, 4)
+        result = dict(link=link, errors=errors, aer_stats=self.hw.aer_stats(dev))
+        self.exp.record('cap_retrain_port', bdf=dev, **result)
+        if errors['uncor'] or errors['cor'] or errors.get('root_status', 0) & 0x7F or errors['device_status'] & 15:
+            raise Stop(f'AER/device error on {dev}; no recovery writes')
+        if errors['device_status'] & 0x20:
+            raise Stop('transactions pending; abort experiment')
+        if self.before and result['aer_stats'] != self.before[dev]['aer_stats']:
+            raise Stop('kernel AER counters changed; no retry')
+        if link['ctl'] & 0x10:
+            raise Stop('Link Disable observed')
+        # Check negotiated width/speed only after the LTSSM leaves Training.
+        if not link['sta'] & 0x800:
+            if (link['sta'] >> 4) & 63 != 4 or link['sta'] & 15 not in (1, 2):
+                raise Stop('Link Down or unexpected negotiated width/speed')
+            if link['cap'] & 0x100000 and not link['sta'] & 0x2000:
+                raise Stop('DLL inactive after training')
+        return result
+
+    def snapshot(self, training_allowed=False):
+        # Root first; no endpoint or BAR access while the root reports Training.
+        root = self.port(ROOT)
+        if root['link']['sta'] & 0x800:
+            if training_allowed:
+                return {ROOT: root}
+            raise Stop('root already training; no writes')
+        self.exp.alive()
+        gpu = self.port(GPU)
+        state = {ROOT: root, GPU: gpu}
+        for dev, info in state.items():
+            link = info['link']
+            if dev == GPU and (link['cap'] != 0x00453C42 or link['cap2'] != 6):
+                raise Stop('GPU capability changed')
+            if dev == ROOT and ((link['cap'] & 15) != 3 or (link['cap'] >> 4) & 63 != 16
+                                or link['cap2'] & 14 != 14):
+                raise Stop('root capability differs from confirmed Gen3 x16 baseline')
+            if self.before:
+                old = self.before[dev]['link']
+                if any(link[k] != old[k] for k in ('cap', 'cap2')):
+                    raise Stop('capability changed during experiment')
+                if link['ctl'] & ~0x20 != old['ctl'] & ~0x20:
+                    raise Stop('Link Control changed outside Retrain Link')
+                if link['ctl2'] & ~15 != old['ctl2'] & ~15:
+                    raise Stop('Link Control 2 changed outside TLS')
+        if not training_allowed and any(v['link']['sta'] & 0x800 or v['link']['ctl'] & 0x20
+                                        for v in state.values()):
+            raise Stop('link not idle before write')
+        return state
+
+    def baseline(self):
+        self.exp.guard()
+        if (self.hw.cfg(ROOT, self.exp.rc + 2, 2) >> 4) & 15 != 4:
+            raise Stop('upstream device is not a Root Port')
+        actual = self.exp.registers()
+        self.exp.record('cap_retrain_baseline', expected=EXPECTED_CAP_BAR0, actual=actual)
+        if actual != EXPECTED_CAP_BAR0:
+            raise Stop('exact cap-speed baseline required; no prefix preparation')
+        state = self.snapshot()
+        # DLL reporting is required to gate safe endpoint access after retrain.
+        if not state[ROOT]['link']['cap'] & 0x100000:
+            raise Stop('root DLL Link Active reporting required')
+        if self.hw.bar(0x8C040) & 0x10:
+            raise Stop('proprietary LTSSM status ACTIVE before retrain')
+        return state
+
+    def idle(self):
+        self.exp.guard()
+        state = self.snapshot()
+        if self.exp.registers() != EXPECTED_CAP_BAR0:
+            raise Stop('BAR0 baseline changed before retrain')
+        if self.hw.bar(0x8C040) & 0x10:
+            raise Stop('LTSSM status ACTIVE before retrain')
+        return state
+
+    def run(self, apply=False):
+        self.before = self.baseline()
+        self.exp.record('cap_retrain_plan', tls_order=[GPU, ROOT], tls=2,
+                        retrain_root=ROOT, max_retrains=1, mmio_writes=False,
+                        hardware_writes=apply)
+        if not apply:
+            return
+        for dev, cap in ((GPU, self.exp.gc), (ROOT, self.exp.rc)):
+            state = self.idle()
+            old = state[dev]['link']['ctl2']
+            new = (old & ~15) | 2
+            if old != new:
+                self.exp.record('before_tls', bdf=dev, offset=cap + 0x30, old=old, new=new)
+                self.hw.cfg_write(dev, cap + 0x30, 2, new)
+                rb = self.hw.cfg(dev, cap + 0x30, 2)
+                self.exp.record('after_tls', bdf=dev, readback=rb)
+                if rb != new:
+                    raise Stop('TLS full readback mismatch; no retrain')
+        state = self.idle()
+        if any(v['link']['ctl2'] & 15 != 2 for v in state.values()):
+            raise Stop('both TLS must remain 2; no retrain')
+        old = state[ROOT]['link']['ctl']
+        if self.triggered:
+            raise Stop('root retrain already attempted')
+        self.exp.record('before_retrain', bdf=ROOT, offset=self.exp.rc + 0x10,
+                        old=old, new=old | 0x20)
+        self.triggered = True
+        self.hw.cfg_write(ROOT, self.exp.rc + 0x10, 2, old | 0x20)
+        deadline, stable = self.exp.clock() + 5, None
+        while True:
+            if self.hw.driver():
+                raise Stop('GPU driver became bound during experiment')
+            state = self.snapshot(training_allowed=True)
+            now = self.exp.clock()
+            complete = len(state) == 2 and self.exp.link_ok(
+                {dev: info['link'] for dev, info in state.items()}, 2)
+            if len(state) == 2 and any(v['link']['ctl2'] & 15 != 2 for v in state.values()):
+                raise Stop('TLS changed after retrain')
+            if complete:
+                stable = now if stable is None else stable
+                if now - stable >= 1:
+                    # BAR0 only after both ends are idle and Gen2 x4.
+                    regs = self.exp.registers()
+                    self.exp.record('cap_retrain_final_bar0', registers=regs,
+                                    ltssm_active=bool(regs[0x8C040] & 0x10))
+                    if regs != EXPECTED_CAP_BAR0:
+                        raise Stop('BAR0 changed after retrain; review without correction')
+                    state = self.snapshot()
+                    if not self.exp.link_ok({dev: info['link'] for dev, info in state.items()}, 2):
+                        raise Stop('Gen2 x4 changed during final validation')
+                    self.exp.record('cap_retrain_result', gen2_x4=True, cuda_verified=False,
+                                    retrains=1, links=state, driver_bind=False)
+                    return
+            else:
+                stable = None
+            if now >= deadline:
+                self.exp.record('cap_retrain_result', gen2_x4=False, retrains=1, links=state)
+                raise Stop('single retrain did not produce stable Gen2 x4; no retry')
+            self.exp.sleep(min(.05, deadline - now))
 
 
 class Experiment:
@@ -455,17 +669,20 @@ def cuda_check():
 
 def arguments(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--mode', choices=('probe', 'stage1', 'stage1-override', 'stage1-cap-speed', 'stage2', 'verify-cuda'), default='probe')
+    p.add_argument('--mode', choices=('probe', 'stage1', 'stage1-override', 'stage1-cap-speed', 'stage2', 'stage2-cap-retrain', 'verify-cuda'), default='probe')
     action = p.add_mutually_exclusive_group()
     action.add_argument('--apply', action='store_true', help='execute the selected stage; otherwise plan only')
     action.add_argument('--dry-run', action='store_true', help='explicit read-only plan (default)')
     p.add_argument('--confirm-bdf', default='')
     p.add_argument('--authorize-stage2', action='store_true', help='separate permission for TLS and one root retrain')
+    p.add_argument('--authorize-cap-retrain', action='store_true', help='separate permission for stage2-cap-retrain TLS and one root retrain')
     p.add_argument('--authorize-cuda', action='store_true', help='allow a CUDA context/transfer on GPU 0')
     p.add_argument('--log-dir', type=Path, default=Path('work/linux-backup'))
     a = p.parse_args(argv)
-    if a.apply and a.mode not in ('stage1', 'stage1-override', 'stage1-cap-speed', 'stage2'):
-        p.error('--apply requires stage1, stage1-override, stage1-cap-speed or stage2')
+    if a.apply and a.mode not in ('stage1', 'stage1-override', 'stage1-cap-speed', 'stage2', 'stage2-cap-retrain'):
+        p.error('--apply requires an experiment stage')
+    if a.apply and a.mode == 'stage2-cap-retrain' and not a.authorize_cap_retrain:
+        p.error('stage2-cap-retrain requires --authorize-cap-retrain')
     if a.dry_run and a.mode == 'verify-cuda':
         p.error('verify-cuda performs driver operations; --dry-run is not supported')
     if (a.apply or a.mode == 'verify-cuda') and a.confirm_bdf != GPU:
@@ -499,13 +716,15 @@ def main(argv=None):
                                 override=a.mode == 'stage1-override')
             if a.mode == 'stage1-cap-speed':
                 backend_args['cap_speed'] = True
-            hw = Linux(**backend_args)
+            hw = CapRetrainLinux(writable=a.apply) if a.mode == 'stage2-cap-retrain' else Linux(**backend_args)
             try:
                 hw.topology()
                 exp = Experiment(hw, record)
                 exp.alive()
                 record('baseline', gpu=GPU, root=ROOT, links=exp.links(), driver_bound=hw.driver())
-                if a.mode == 'stage1-cap-speed':
+                if a.mode == 'stage2-cap-retrain':
+                    CapRetrain(exp).run(apply=a.apply)
+                elif a.mode == 'stage1-cap-speed':
                     exp.stage1_cap_speed(apply=a.apply)
                 elif a.mode == 'verify-cuda':
                     exp.verify_cuda(cuda_check)
