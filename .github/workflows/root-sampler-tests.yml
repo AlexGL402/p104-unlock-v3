@@ -1,0 +1,11 @@
+name: Read-only Root Port sampler (synthetic)
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  root-sampler:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m unittest discover -s tests -p 'test_root_sampler.py' -v
+      - run: python3 -m py_compile pcie_root_sampler.py tests/test_root_sampler.py

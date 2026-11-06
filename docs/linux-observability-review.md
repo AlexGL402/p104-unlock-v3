@@ -4,6 +4,16 @@ Research / offline analysis only. No new write executor, hardware sampler, kerne
 module, trace attachment, tracefs setting, driver change or VBIOS operation is
 implemented or executed here. GPU 1 is excluded.
 
+## Root-only passive sampler now available
+
+The independent [read-only sampler](linux-root-sampler.md) implements the next
+Root Port timing test, fixed to 0000:00:02.0 LNKSTA offset A2. It reads no GPU or
+BAR0 and works with both GPUs bound to NVIDIA. The user's 2000-read run on
+6.8.0-142-generic observed 3041 throughout, read p50/p99/max 3.58/4.59/15.12 us
+and reported max blind gap 82.53 us. That finite-window observation is not a
+GP104 pulse-duration or command-acceptance guarantee. New reports separate the
+gap definitions and actual capture coverage. CHANGE_SPEED execution remains blocked.
+
 ## Decision
 
 **Do not implement the proposed 20085800→20085801 executor yet.** With the existing
