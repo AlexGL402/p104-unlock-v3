@@ -18,10 +18,14 @@ BASE = Path('/sys/bus/pci/devices')
 # Each mode has its own BAR0 write allowlist; speed/width requests stay forbidden.
 PATCHES = ((0x2241C, 0x81, 0x81), (0x8841C, 0x6000, 0))
 OVERRIDE_PATCHES = ((0x8872C, 0xF, 6),) + PATCHES
+CAP_SPEED_PATCH = (0x8C1C0, 0x00030000, 0x00020000)
 LOCK_PATH = Path('/run/lock/p104-gen2-linux.lock')
 EXPECTED_BAR0 = {0x8872C: 0, 0x2241C: 0, 0x8841C: 0xC0B46500,
                  0x8C2C0: 0x068711B3, 0x8C300: 0x040A00C0,
                  0x8C040: 0x20085800, 0x8C1C0: 0x00010032, 0x88610: 0}
+EXPECTED_OVERRIDE_BAR0 = dict(EXPECTED_BAR0)
+for _off, _mask, _value in OVERRIDE_PATCHES:
+    EXPECTED_OVERRIDE_BAR0[_off] = (EXPECTED_OVERRIDE_BAR0[_off] & ~_mask) | _value
 
 
 class Stop(RuntimeError):
@@ -48,10 +52,14 @@ def find_cap(hw, bdf, ident):
 
 
 class Linux:
-    def __init__(self, writable=False, mmio_writable=False, override=False):
+    def __init__(self, writable=False, mmio_writable=False, override=False, cap_speed=False):
+        if cap_speed and (override or writable):
+            raise Stop('cap-speed backend forbids override and PCI config writes')
         self.writable = writable
         self.mmio_writable = mmio_writable
-        self.bar0_patches = OVERRIDE_PATCHES if override else PATCHES
+        self.cap_speed = cap_speed
+        self.cap_speed_written = False
+        self.bar0_patches = (CAP_SPEED_PATCH,) if cap_speed else OVERRIDE_PATCHES if override else PATCHES
         self.libc = ctypes.CDLL(None, use_errno=True)
         self.libc.mmap.argtypes = (ctypes.c_void_p, ctypes.c_size_t, ctypes.c_int,
                                    ctypes.c_int, ctypes.c_int, ctypes.c_long)
@@ -101,6 +109,10 @@ class Linux:
     def bar_write(self, off, value):
         if not self.mmio_writable or self.mm is None or off not in {p[0] for p in self.bar0_patches}:
             raise Stop('BAR0 write access denied')
+        if self.cap_speed:
+            if self.cap_speed_written or value != 0x00020032 or self.bar(off) != 0x00010032:
+                raise Stop('cap-speed permits exactly one 00010032 -> 00020032 write')
+            self.cap_speed_written = True
         ctypes.c_uint32.from_address(self.mm + off).value = value
 
     def close(self):
@@ -306,6 +318,76 @@ class Experiment:
                     links=state, retrain_performed=False)
         raise Stop('override prefix did not latch Gen2; no fallback/retrain')
 
+    def cap_speed_preflight(self):
+        self.guard()
+        actual = self.registers()
+        state = self.links()
+        self.record('cap_speed_baseline', expected=EXPECTED_OVERRIDE_BAR0,
+                    actual=actual, links=state)
+        if actual != EXPECTED_OVERRIDE_BAR0:
+            raise Stop('cap-speed requires exact override baseline; no prefix preparation or writes')
+        if state[GPU]['cap'] != 0x00453C41 or state[GPU]['cap2'] != 6:
+            raise Stop('cap-speed requires GPU LNKCAP=0x00453C41 and LNKCAP2=6')
+        if (state[ROOT]['cap'] & 15) < 2 or (state[ROOT]['cap2'] & 6) != 6:
+            raise Stop('root does not advertise Gen2')
+        self.cap_speed_check_link(state)
+        return state
+
+    def cap_speed_check_link(self, state):
+        if not self.link_ok(state, 1) or any(
+                v['cap'] & (1 << 20) and not v['sta'] & (1 << 13)
+                for v in state.values()):
+            raise Stop('link changed during stage1-cap-speed; no recovery writes')
+
+    def stage1_cap_speed(self, apply=True):
+        before = self.cap_speed_preflight()
+        off, mask, value = CAP_SPEED_PATCH
+        old = EXPECTED_OVERRIDE_BAR0[off]
+        new = (old & ~mask) | value
+        if not apply:
+            self.record('plan', offset=off, mask=mask, old=old, new=new,
+                        hardware_writes=False, prefix_preparation=False)
+            return
+        # Revalidate after durable baseline logging, before the single write.
+        before = self.cap_speed_preflight()
+        self.record('before_mmio', offset=off, mask=mask, old=old, new=new)
+        self.hw.bar_write(off, new)
+        deadline = self.clock() + 2
+        self.alive()
+        rb = checked(self.hw.bar(off))
+        self.record('after_mmio', offset=off, readback=rb)
+        expected = dict(EXPECTED_OVERRIDE_BAR0)
+        expected[off] = new
+        while True:
+            state = self.links()
+            self.record('cap_speed_sample', offset=off, readback=rb, links=state,
+                        links_hex={bdf: {k: f'0x{v:08X}' for k, v in row.items()}
+                                   for bdf, row in state.items()})
+            if rb != new:
+                raise Stop('cap-speed full readback mismatch; no recovery writes')
+            self.cap_speed_check_link(state)
+            if state[GPU]['cap2'] != 6 or state[GPU]['cap'] not in (0x00453C41, 0x00453C42):
+                raise Stop('unexpected GPU capability during cap-speed observation')
+            if any(state[bdf][field] != before[bdf][field]
+                   for bdf in (GPU, ROOT) for field in ('ctl', 'ctl2')) or any(
+                    state[ROOT][field] != before[ROOT][field] for field in ('cap', 'cap2')):
+                raise Stop('PCI control/root capability changed; no recovery writes')
+            # Other proprietary registers must remain untouched too.
+            if self.registers() != expected:
+                raise Stop('BAR0 state changed during cap-speed observation')
+            remaining = deadline - self.clock()
+            if remaining <= 0:
+                break
+            self.sleep(min(.1, remaining))
+            self.alive()
+            rb = checked(self.hw.bar(off))
+        complete = state[GPU]['cap'] == 0x00453C42
+        self.record('cap_speed_result', capability_gen2=complete, writes=1,
+                    reason='capability_consistent' if complete else 'lnkcap_unchanged',
+                    links=state, link_gen2_x4=False, retrain_performed=False)
+        if not complete:
+            raise Stop('LNKCAP remained Gen1; experiment ended without fallback')
+
     def verify_cuda(self, action):
         if not self.hw.driver():
             raise Stop('manually rebind GPU 0 before CUDA verification')
@@ -373,15 +455,19 @@ def cuda_check():
 
 def arguments(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--mode', choices=('probe', 'stage1', 'stage1-override', 'stage2', 'verify-cuda'), default='probe')
-    p.add_argument('--apply', action='store_true', help='execute the selected stage; otherwise plan only')
+    p.add_argument('--mode', choices=('probe', 'stage1', 'stage1-override', 'stage1-cap-speed', 'stage2', 'verify-cuda'), default='probe')
+    action = p.add_mutually_exclusive_group()
+    action.add_argument('--apply', action='store_true', help='execute the selected stage; otherwise plan only')
+    action.add_argument('--dry-run', action='store_true', help='explicit read-only plan (default)')
     p.add_argument('--confirm-bdf', default='')
     p.add_argument('--authorize-stage2', action='store_true', help='separate permission for TLS and one root retrain')
     p.add_argument('--authorize-cuda', action='store_true', help='allow a CUDA context/transfer on GPU 0')
     p.add_argument('--log-dir', type=Path, default=Path('work/linux-backup'))
     a = p.parse_args(argv)
-    if a.apply and a.mode not in ('stage1', 'stage1-override', 'stage2'):
-        p.error('--apply requires stage1, stage1-override or stage2')
+    if a.apply and a.mode not in ('stage1', 'stage1-override', 'stage1-cap-speed', 'stage2'):
+        p.error('--apply requires stage1, stage1-override, stage1-cap-speed or stage2')
+    if a.dry_run and a.mode == 'verify-cuda':
+        p.error('verify-cuda performs driver operations; --dry-run is not supported')
     if (a.apply or a.mode == 'verify-cuda') and a.confirm_bdf != GPU:
         p.error(f'explicit --confirm-bdf {GPU} required')
     if a.apply and a.mode == 'stage2' and not a.authorize_stage2:
@@ -408,15 +494,20 @@ def main(argv=None):
                 log.flush()
                 os.fsync(log.fileno())
                 print(row, flush=True)
-            hw = Linux(writable=a.apply and a.mode == 'stage2',
-                       mmio_writable=a.apply and a.mode in ('stage1', 'stage1-override'),
-                       override=a.mode == 'stage1-override')
+            backend_args = dict(writable=a.apply and a.mode == 'stage2',
+                                mmio_writable=a.apply and a.mode in ('stage1', 'stage1-override', 'stage1-cap-speed'),
+                                override=a.mode == 'stage1-override')
+            if a.mode == 'stage1-cap-speed':
+                backend_args['cap_speed'] = True
+            hw = Linux(**backend_args)
             try:
                 hw.topology()
                 exp = Experiment(hw, record)
                 exp.alive()
                 record('baseline', gpu=GPU, root=ROOT, links=exp.links(), driver_bound=hw.driver())
-                if a.mode == 'verify-cuda':
+                if a.mode == 'stage1-cap-speed':
+                    exp.stage1_cap_speed(apply=a.apply)
+                elif a.mode == 'verify-cuda':
                     exp.verify_cuda(cuda_check)
                 elif a.apply:
                     getattr(exp, a.mode.replace('-', '_'))()

@@ -3,7 +3,10 @@
 Status: **experimental, no hardware-validated Gen2 unlock**. The user ran the
 original two-switch Stage 1 on T5600: both exact readbacks succeeded, but Gen2
 LNKCAP2 did not appear within two seconds. Stage 2 was not run, GPU 1 was unchanged.
-The new `stage1-override` has only offline validation. No hardware operations were
+The user subsequently ran `stage1-override`: all three readbacks matched, GPU
+LNKCAP2 changed 2→6 immediately after 8841C, but LNKCAP stayed Gen1 and both links
+stayed Gen1 x4. The script stopped at `inconsistent_capability`, without Link Down.
+The new `stage1-cap-speed` has only offline validation. No hardware operations were
 performed by the development agent.
 No VBIOS/EFI/driver installation changes, startup service, automatic rebind,
 reset, width arm, recovery writes, or background holder are implemented.
@@ -77,7 +80,7 @@ a new reviewed experiment and separate hardware authorization.
   Failed operations may leave the two switches or TLS modified: power-cycle recovery
   remains manual. Logs are not permission tokens; Stage 2 validates live state.
 
-## New experiment: `stage1-override` on GPU 0
+## Override-prefix experiment: `stage1-override` on GPU 0
 
 The negative Stage 1 result establishes that the two switches alone did not latch
 Gen2 within the measured window on this machine. It does not establish that SPEED
@@ -167,6 +170,121 @@ There is no chained TLS/retrain/CUDA step, no retries and no automatic rollback.
 Writes to `8C040`, `8C1C0` and `88610` are denied by the backend allowlist.
 GPU 1 and its root remain outside this experiment.
 
+## New experiment: `stage1-cap-speed` on GPU 0
+
+Purpose: test whether `8C1C0[17:16]` controls the still-Gen1 LNKCAP maximum-speed
+field, independently of LNKCAP2 and a request to change the physical link rate.
+[Nouveau gk104.c](https://github.com/torvalds/linux/blob/master/drivers/gpu/drm/nouveau/nvkm/subdev/pci/gk104.c)
+uses mask `0x30000` in `gk104_pcie_set_cap_speed()` / `gk104_pcie_cap_speed()`;
+[envytools pci.xml](https://github.com/envytools/envytools/blob/master/rnndb/bus/pci.xml)
+names bits 17:16 `LNK_CAP_SPEED`. These are related-family implementation and
+register descriptions, not a guarantee of P104 behavior or write safety. The
+repository's older label "target speed [19:16]" should not be used for this test.
+`8C040` requests a link-rate change separately; `88610` is not modified to keep
+this a single-variable capability experiment.
+
+**Authorization to prepare code does not authorize running either hardware step.**
+The commands below are instructions only; none were run by the development agent.
+
+Strict preconditions (also checked by dry-run):
+
+- GPU 0 `0000:03:00.0`, ID 10de:1b87, parent `0000:00:02.0` with Intel identity.
+- GPU already unbound, D0, memory decoding on and bus mastering off; both links
+  idle Gen1 x4. Link Disable/Retrain/Training or inactive reported DLL aborts.
+- GPU LNKCAP exactly `0x00453C41`, LNKCAP2 exactly `0x00000006`; root advertises
+  Gen2 and remains Gen1 x4. JSON integer **4537409 decimal** is `0x00453C41`;
+  the literal `0x04537409` is different and will be rejected.
+- Every known BAR0 register must match the following map:
+
+| Offset | Required value before cap-speed |
+| --- | --- |
+| `0x8872C` | `0x00000006` |
+| `0x2241C` | `0x00000081` |
+| `0x8841C` | `0xC0B40500` |
+| `0x8C2C0` | `0x068711B3` |
+| `0x8C300` | `0x040A00C0` |
+| `0x8C040` | `0x20085800` |
+| `0x8C1C0` | `0x00010032` |
+| `0x88610` | `0x00000000` |
+
+**After full power removal the override prefix is lost.** This mode refuses the
+factory baseline, missing/partial prefix, and already-modified cap-speed state.
+It never calls `stage1-override`, restores registers, or asks the driver to prepare
+anything. If a fresh prefix is needed, its preparation is a **separate operation**:
+review the existing override procedure, obtain explicit permission for its three
+writes, then run that mode alone from its required factory baseline:
+
+```sh
+# ONLY after separate authorization for preparing the prefix:
+sudo python3 p104_gen2_linux.py --mode stage1-override --apply \
+  --confirm-bdf 0000:03:00.0 --log-dir work/t5600-prefix-preparation
+```
+
+Do not chain this command to cap-speed. Review the prefix journal first. The
+previously observed `inconsistent_capability` is a negative result of that mode,
+not an automatic go-ahead; cap-speed is designed specifically to require the
+verified LNKCAP=Gen1 / LNKCAP2=6 state after that result. A prefix which stops
+earlier, loses the device, or changes any required value is not an accepted baseline.
+Restoring the factory baseline when needed is outside these automatic modes.
+
+Read-only cap-speed validation/plan (fails if any prerequisite does not match):
+
+```sh
+sudo python3 p104_gen2_linux.py --mode stage1-cap-speed --dry-run \
+  --log-dir work/t5600-cap-speed-plan
+```
+
+Omitting both `--apply` and `--dry-run` also selects the same read-only plan.
+`--dry-run` and `--apply` are mutually exclusive. Only after review and **separate
+permission for the single cap-speed hardware write**:
+
+```sh
+sudo python3 p104_gen2_linux.py --mode stage1-cap-speed --apply \
+  --confirm-bdf 0000:03:00.0 --log-dir work/t5600-cap-speed
+```
+
+The only permitted write is:
+
+```text
+offset = 0x8C1C0
+mask   = 0x00030000
+old    = 0x00010032
+new    = (old & ~mask) | 0x00020000 = 0x00020032
+```
+
+Backend permissions allow only that address/value/old-value transition, once per
+backend instance; all override, SPEED and VSEC writes are denied. PCI config writes
+are disabled. Full preflight is repeated before durable write intent. After the
+single write, record full readback and both-end LNKCAP/LNKCAP2/LNKSTA plus controls;
+observe in a two-second monotonic window, with no retry writes. Polling sleeps are
+bounded by the remaining window; individual filesystem/MMIO/logging calls are
+synchronous and cannot have a guaranteed wall-clock deadline. Exact readback and
+all other known BAR0 values must remain unchanged except the intended transition.
+Control fields and root capabilities must not change either.
+
+The experiment then ends in every case:
+
+- `capability_consistent`: GPU LNKCAP is exactly `0x00453C42`, LNKCAP2 remains 6,
+  both actual links remain Gen1 x4. This is **capability success only**.
+- `lnkcap_unchanged`: full readback succeeded but GPU LNKCAP remains `0x00453C41`.
+  Record the negative result and stop with failure, no additional writes.
+- Loss, full-readback mismatch, unexpected capability/control/BAR0 change, training,
+  or any negotiated-link change: abort immediately. No automatic recovery.
+
+Each invocation creates an exclusive `gpu0-stage1-cap-speed-<time_ns>.jsonl`.
+`cap_speed_baseline` stores expected/actual BAR0 and links; `before_mmio` includes
+the mask/old/new; `after_mmio` stores full readback; `cap_speed_sample` stores raw
+both-end values in numeric **and explicit hex** form. `cap_speed_result` records
+the outcome, `writes=1`, `link_gen2_x4=false`, `retrain_performed=false`; failures
+retain intent and `abort`. Mode/apply status is recorded in every fsynced row.
+Dry-run has its own journal but no write intent. Supply the complete journal for
+review before proposing another experiment. Do not run Stage 2 after this mode:
+its baseline intentionally rejects the retained override/cap-speed values.
+
+No TLS, retrain, reset, bind, CUDA, background hold, startup task or automatic
+prefix preparation is part of this mode. GPU 1, VBIOS and driver installation
+remain outside its scope.
+
 ## Original two-switch procedure (user reported no latch; do not repeat)
 
 The following documents the original Stage 1/Stage 2 interface. It is not a
@@ -237,7 +355,7 @@ Attach JSONL and workload results to the PR; none are currently available.
 
 ```sh
 python3 -m unittest discover -s tests -v
-python3 -m py_compile p104_gen2_linux.py tests/test_linux_gen2.py
+python3 -m py_compile p104_gen2_linux.py tests/test_linux_gen2.py tests/test_cap_speed.py
 ```
 
 Tests use injected config/BAR state, simulated time, and a fake CUDA library.
