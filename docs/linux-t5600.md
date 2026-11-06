@@ -8,7 +8,11 @@ LNKCAP2 changed 2→6 immediately after 8841C, but LNKCAP stayed Gen1 and both l
 stayed Gen1 x4. The script stopped at `inconsistent_capability`, without Link Down.
 The user subsequently confirmed cap-speed success independently with lspci: GPU
 capability is Gen2 x4, root capability Gen3 x16, both actual links Gen1 x4.
-The new `stage2-cap-retrain` has only offline validation. No hardware operations were
+The user subsequently ran `stage2-cap-retrain`: both TLS writes and one root
+retrain succeeded, but both links remained Gen1 x4 with zero observed AER.
+Do not repeat that experiment as fallback. See
+[the speed-transition research and offline proposal](linux-speed-transition-design.md)
+for the next design; it adds no hardware execution mode. No hardware operations were
 performed by the development agent.
 No VBIOS/EFI/driver installation changes, startup service, automatic rebind,
 reset, width arm, recovery writes, or background holder are implemented.
