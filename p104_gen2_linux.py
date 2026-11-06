@@ -126,7 +126,11 @@ def main():
             for off,mask,val,name in PATCHES:
                 old=rd(off);new=(old&(~mask&0xffffffff))|(val&mask)
                 wr(off,new,mask)
-            record('after_live',gpu_link=link(GPU,gc))
+            after_live=link(GPU,gc)
+            record('after_live',gpu_link=after_live)
+            if (after_live['cap2'] & 0x6) != 0x6:
+                record('abort',reason='LNKCAP2 Gen2 not latched; skipping TLS/retrain')
+                raise RuntimeError('GPU does not advertise Gen2; PCIe retrain cancelled')
             set_tls(GPU,gc)
             set_tls(ROOT,rc)
             check_alive()
