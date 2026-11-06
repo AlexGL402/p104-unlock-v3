@@ -1,0 +1,2 @@
+{"event": "manifest", "started_utc": "2026-11-06T22:28:30.508407+00:00", "kernel": "6.8.0-142-generic", "root": "0000:00:02.0", "gpu": "0000:03:00.0", "root_offset": "0xA2", "gpu_offset": "0x8C040", "hardware_writes": false, "automatic_unbind": false, "gpu1_access": false, "sequential_not_atomic": true, "max_records": 100000, "raw_buffer_bytes": 2700000, "requested_duration_s": 0.05, "clock": "monotonic_ns", "no_fsync_in_hot_loop": true}
+{"event": "abort", "reason": "Stop: GPU 0 driver is bound; no endpoint/BAR access"}

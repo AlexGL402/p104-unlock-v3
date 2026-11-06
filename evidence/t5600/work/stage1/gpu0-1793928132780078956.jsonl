@@ -1,0 +1,6 @@
+{"ts": 1793928132.7819881, "event": "baseline", "gpu": "0000:03:00.0", "root": "0000:00:02.0", "links": {"0000:03:00.0": {"cap": 4537409, "sta": 4161, "cap2": 2, "ctl": 320, "ctl2": 0}, "0000:00:02.0": {"cap": 8026371, "sta": 12353, "cap2": 14, "ctl": 64, "ctl2": 67}}, "driver_bound": false}
+{"ts": 1793928132.7930746, "event": "before_mmio", "offset": 140316, "old": 0, "new": 129}
+{"ts": 1793928132.798964, "event": "after_mmio", "offset": 140316, "readback": 129}
+{"ts": 1793928132.8053367, "event": "before_mmio", "offset": 558108, "old": 3233047808, "new": 3233023232}
+{"ts": 1793928132.810617, "event": "after_mmio", "offset": 558108, "readback": 3233023232}
+{"ts": 1793928134.850577, "event": "abort", "reason": "Stop: minimal switches did not latch Gen2; no fallback/retrain", "recovery_writes": false}
