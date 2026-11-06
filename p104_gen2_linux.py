@@ -15,6 +15,7 @@ PATCHES = [
  (0x8C1C0,0x000f0000,0x00020000,'LCTRL_2'),
  (0x88610,0x00001001,0x00000001,'VSEC_HIERARCHY'),
 ]
+EXPECTED_BAR0={0x8872C:0,0x2241C:0,0x8841C:0xC0B46500,0x8C2C0:0x068711B3,0x8C300:0x040A00C0,0x8C040:0x20085800,0x8C1C0:0x00010032,0x88610:0}
 GPU='0000:03:00.0'
 ROOT='0000:00:02.0'
 BASE=pathlib.Path('/sys/bus/pci/devices')
@@ -63,8 +64,10 @@ def main():
     g.add_argument('--dry-run',action='store_true')
     g.add_argument('--apply',action='store_true')
     p.add_argument('--confirm-risk',action='store_true',help='required with --apply')
+    p.add_argument('--confirm-bdf',default='',help='explicit target GPU for --apply')
     a=p.parse_args()
-    if a.apply and not a.confirm_risk: p.error('--apply requires --confirm-risk')
+    if a.apply and (not a.confirm_risk or a.confirm_bdf != GPU):
+        p.error('--apply requires --confirm-risk --confirm-bdf 0000:03:00.0')
     if os.geteuid()!=0: p.error('run with sudo')
     check_alive()
     parent=(BASE/GPU).resolve().parent.name
@@ -118,6 +121,13 @@ def main():
                 old=rd(off);new=(old&(~mask&0xffffffff))|(val&mask)
                 if off==0x8C040 and not valid_linkcfg(new):raise RuntimeError('UNSAFE LINKCFG')
                 record('plan',name=name,offset=hex(off),old=hex(old),new=hex(new))
+            if a.apply:
+                actual={off:rd(off) for off in EXPECTED_BAR0}
+                if actual!=EXPECTED_BAR0:
+                    record('abort',reason='BAR0 baseline mismatch',expected={hex(k):hex(v) for k,v in EXPECTED_BAR0.items()},actual={hex(k):hex(v) for k,v in actual.items()})
+                    raise RuntimeError('BAR0 baseline mismatch; no writes performed')
+                if (link(GPU,gc)['sta'] & 0x3ff)!=0x41:
+                    raise RuntimeError('GPU is not at expected Gen1 x4; no writes performed')
             if not a.apply:
                 record('plan_pci',gpu_tls=2,root_tls=2,retrain_root=ROOT,
                        note='No hardware writes; x16 width arm excluded')
@@ -127,6 +137,11 @@ def main():
                 old=rd(off);new=(old&(~mask&0xffffffff))|(val&mask)
                 wr(off,new,mask)
             after_live=link(GPU,gc)
+            deadline=time.monotonic()+1.5
+            while (after_live['cap2'] & 0x6)!=0x6 and time.monotonic()<deadline:
+                time.sleep(0.1)
+                check_alive()
+                after_live=link(GPU,gc)
             record('after_live',gpu_link=after_live)
             if (after_live['cap2'] & 0x6) != 0x6:
                 record('abort',reason='LNKCAP2 Gen2 not latched; skipping TLS/retrain')
