@@ -26,9 +26,10 @@ GPU0 `0000:03:00.0`, Root Port `0000:00:02.0`, NVIDIA 580.196.07,
 Ubuntu 24.04, kernel 6.8.0-142-generic, VBIOS `86.04.7A.00.47`.
 GPU1 `0000:04:00.0` и её Root Port исключены из всех предложений.
 
-Это результаты, сообщённые пользователем; исходные JSONL и образ .47 в
-доступном checkout отсутствуют. Поэтому нельзя заново проверить точные
-временные границы, полные baseline аварии и промежуточные состояния.
+Первоначально это были результаты, сообщённые пользователем. Теперь 13 JSONL
+проверены программно: см. [Evidence audit](#evidence-audit). Журнал аварийной
+SPEED-записи и образ .47 в этом наборе отсутствуют. Полный baseline аварии
+и её промежуточные состояния по-прежнему проверить нельзя.
 
 | Наблюдение | Что оно устанавливает | Чего не устанавливает |
 | --- | --- | --- |
@@ -237,6 +238,8 @@ GPU: обещать абсолютную изоляцию GPU1 на основа
 Следующий выбранный эксперимент — **offline-сопоставление уже полученных
 трасс и исходников**, а не новый аппаратный trigger. Он проверит, имеется
 ли реальное отличие A/E от аварии, вместо предположения об этом отличии.
+Разбор предоставленного набора теперь выполнен в Evidence audit ниже;
+пункты о crash log, .47 и точном driver path остаются открытыми.
 
 1. Сохранить исходные JSONL прошлой аварии, override, cap-speed, TLS/retrain
    и fresh-fast; добавить версии файлов/commit, boot ID, монотонные границы,
@@ -317,3 +320,231 @@ ACK не обязателен для доказательства устойчи
 зафиксирует отказ без автоматических повторов. Он не устраняет текущую
 неопределённость отрицательных A/B/C и потому не служит основанием
 реализовать или запускать hardware write executor сейчас.
+
+
+## Evidence audit
+
+### Состав и метод проверки
+
+Аудит привязан к неизменяемому коммиту evidence-ветки
+[`ceb943228f6757fe25e114df59d5d3e8b3b1d5ad`](https://github.com/AlexGL402/p104-unlock-v3/tree/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work).
+Все **13 JSONL / 75 285 строк** загружены целиком и разобраны, включая
+22 772 331-байтный Root sampler. Размер и Git blob SHA-1 каждого файла
+сверены с Git tree; ошибок JSON нет. Evidence-ветка не изменялась.
+
+Программная проверка независимо пересчитала из sample-записей p50 (median),
+p99 (nearest rank), max для read/cycle/no-read/conservative gap всех
+каналов, сверила summary и порядок времён внутри канала. Для всех MMIO
+`before_mmio` найдена следующая `after_mmio` с тем же offset и точным
+readback; для retrain проверены все 164 port snapshots, AER status и
+каждое числовое значение kernel AER counters. Вместе с проверками размера,
+hash, JSON/event, длительностей чтения и ts выполнено 68 732 assertions;
+все прошли. Это проверки файлов и согласованности, не аппаратная валидация.
+
+Словарь доказательств:
+
+* `old`, `readback`, `actual`, `link/links`, sample `raw` — зарегистрированные
+  чтения. Их происхождение — сам скрипт, не независимый bus trace.
+* `new`, `expected`, `plan`, `before_*` — ожидаемое значение/намерение;
+  одиночное `before_*` не является аппаратным подтверждением записи.
+* `capability_gen2`, `gen2_x4`, `retrains`, STOP reason и manifest flags —
+  выводы/счётчики/декларации программы; проверяем их по raw fields, где они есть.
+* Не записанное поле — **unknown**, а не ноль и не перенесённый из другого
+  опыта baseline. Промежутки между файлами не заполнены догадками.
+
+### Хронология всех 13 файлов
+
+Время начала переведено из записанного `ts` / `started_utc` в
+**Asia/Yekaterinburg (UTC+5), 2026 год**. ID ниже обозначает конкретный
+JSONL; ссылка содержит исходный путь и строки. Внутри staged-журналов `ts`
+не убывает. Межфайловой доказанной boot/monotonic continuity нет.
+
+| ID, начало | Строк | Содержимое и завершение |
+| --- | ---: | --- |
+| [S1:1–6](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/stage1/gpu0-1793928132780078956.jsonl#L1-L6), 06.11 06:22:12.781 | 6 | Два switches, два точных readback; STOP без fallback/retrain |
+| [O1:1–54](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/stage1-override/gpu0-stage1-override-1793929151155255357.jsonl#L1-L54), 06.11 06:39:11.157 | 54 | Три override-записи; CAP2=6 только после третьей; inconsistent capability, STOP |
+| [O2:1–54](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/override-520/gpu0-stage1-override-1793930007183451370.jsonl#L1-L54), 06.11 06:53:27.185 | 54 | Второй самостоятельный override-опыт, тот же результат; каталог `override-520` |
+| [CP:1–3](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/cap-speed-plan/gpu0-stage1-cap-speed-1793930069627383795.jsonl#L1-L3), 06.11 06:54:29.629 | 3 | Cap-speed **dry-run**, hardware_writes=false; не реальная запись |
+| [C:1–26](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/cap-speed-result/gpu0-stage1-cap-speed-1793930108244936087.jsonl#L1-L26), 06.11 06:55:08.246 | 26 | Одна cap-speed запись; CAP Gen2, link Gen1; обычный результат capability_consistent |
+| [RP:1–5](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/cap-retrain-plan/gpu0-stage2-cap-retrain-1793930734987569069.jsonl#L1-L5), 06.11 07:05:34.989 | 5 | TLS/retrain **dry-run**, hardware_writes=false |
+| [R:1–18](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/cap-retrain-result/gpu0-stage2-cap-retrain-1793930796885371367.jsonl#L1-L18), 06.11 07:06:36.887 | 174 | Два TLS readback, один retrain intent; отрицательный результат и STOP в строках 173–174 |
+| [Q:1–4](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/t5600-root-sampler/root0-lnksta-1794002799062628713.jsonl#L1-L4), 07.11 03:06:39.062 | 63 654 | 63 650 Root samples за ~250 мс; stop_reason=duration |
+| [D0:1–2](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/t5600-dual-first/gpu0-dual-1794004110508195856.jsonl#L1-L2), 07.11 03:28:30.508 | 2 | Отказ: driver bound; нет preflight/capture/sample |
+| [D:1–9](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/t5600-dual-first/gpu0-dual-1794004274508572209.jsonl#L1-L9), 07.11 03:31:14.508 | 875 | 747 Root + 124 GPU samples за ~50 мс; duration |
+| [P1:1–6](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/t5600-profile-reference/gpu0-dual-profile-1794005123518674721.jsonl#L1-L6), 07.11 03:45:23.520 | 2 866 | Reference + profiling: 592 Root, 98 GPU, 2 172 profile spans; duration |
+| [P2:1–6](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/t5600-profile-fresh-fast/gpu0-dual-profile-1794005316984632966.jsonl#L1-L6), 07.11 03:48:36.986 | 5 695 | Fresh-fast + profiling: 1 177 Root, 196 GPU, 4 318 spans; duration |
+| [F:1–9](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/t5600-fresh-fast-coverage/gpu0-dual-profile-1794005450984539954.jsonl#L1-L9), 07.11 03:50:50.984 | 1 871 | Fresh-fast без profiling: 1 601 Root + 266 GPU; duration |
+
+### Baseline: что действительно различается
+
+Полные восемь BAR0 слов непосредственно записаны в O1:2, O2:2,
+CP:2, C:2–3, RP:2, R:2. `expected` и `actual` там совпадают.
+В S1 полного BAR0 snapshot нет. В sampler-файлах есть только `8C040`,
+поэтому отсутствие префикса в день sampler **из этих JSONL не доказано**.
+
+| Baseline | 8872C / 2241C / 8841C | 8C1C0 | GPU CAP / CAP2 | GPU CTL2 / Root CTL2 |
+| --- | --- | --- | --- | --- |
+| [O1:1–3](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/stage1-override/gpu0-stage1-override-1793929151155255357.jsonl#L1-L3), [O2:1–3](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/override-520/gpu0-stage1-override-1793930007183451370.jsonl#L1-L3) | `0 / 0 / C0B46500` | `10032` | `00453C41 / 2` | `0000 / 0043` |
+| [CP:1–2](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/cap-speed-plan/gpu0-stage1-cap-speed-1793930069627383795.jsonl#L1-L2), [C:1–3](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/cap-speed-result/gpu0-stage1-cap-speed-1793930108244936087.jsonl#L1-L3) | `6 / 81 / C0B40500` | `10032` | `00453C41 / 6` | `0000 / 0043` |
+| [RP:1–2](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/cap-retrain-plan/gpu0-stage2-cap-retrain-1793930734987569069.jsonl#L1-L2), [R:1–2](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/cap-retrain-result/gpu0-stage2-cap-retrain-1793930796885371367.jsonl#L1-L2) | `6 / 81 / C0B40500` | `20032` | `00453C42 / 6` | `0000 / 0043` |
+
+Во всех этих **полных baseline** одинаковы `8C2C0=068711B3`,
+`8C300=040A00C0`, `8C040=20085800`, `88610=0`.
+GPU CTL=0140, STA=1041; Root CAP=007A7903, CAP2=E, CTL=0040, STA=3041.
+В исходном S1:1 те же config-поля с GPU CAP2=2, но про остальные BAR0
+слова оттуда заключать нельзя. Staged baseline содержит driver_bound=false,
+но не raw D-state/MSE/BME: прохождение проверок исходного скрипта нельзя
+выдавать за отдельно записанные PMCSR/command измерения.
+
+**Разрывы состояния:** S1 заканчивается изменёнными двумя switches,
+но O1 начинается с обоими заводскими значениями. O1 заканчивается
+префиксом, но O2 снова начинается полностью заводским. Значит, между
+этими запусками состояние менялось вне записанной последовательности;
+почему именно — power cycle, reinit или отдельная операция — неизвестно.
+Имя `override-520` само по себе не доказывает версию NVIDIA 520, задержку
+или иной hardware baseline. Оба override-файла имеют одинаковые raw baseline
+и последовательность, но это разные записи по времени, а не дубль файла.
+
+Напротив, O2→CP/C и C→RP/R согласованы по видимым BAR0/config значениям.
+Это совместимость snapshots, **не** доказательство непрерывного boot или
+отсутствия сторонних операций. Boot ID, executable hash/commit и точная
+driver/VBIOS версия в staged-файлах отсутствуют; их нельзя получить из
+имени файла. Kernel 6.8.0-142-generic явно указан в manifests samplers.
+
+### Записи, capability и STOP
+
+* **S1:** [S1:2–5](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/stage1/gpu0-1793928132780078956.jsonl#L2-L5) содержит `2241C:0→81`, затем
+  `8841C:C0B46500→C0B40500`, оба readback точны. STOP в [S1:6](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/stage1/gpu0-1793928132780078956.jsonl#L6) спустя
+  около 2.04 с после второго `after_mmio`. Важно: конечного raw CAP2
+  в этом коротком журнале **нет**. «Не защёлкнул Gen2» — вывод скрипта,
+  согласующийся с сообщением оператора, а не сохранённая временная серия CAP2.
+* **O1 и O2:** before/readback пары — строки 4–5, 27–28, 50–51;
+  offsets строго `8872C → 2241C → 8841C`. Между первой и второй,
+  второй и третьей записями около 2 с наблюдения. Все 44 override samples
+  в каждом файле разобраны: CAP2=2 до третьего шага, CAP2=6 в строке 52,
+  GPU CAP всё время `00453C41`, оба линка Gen1 x4. Ссылки:
+  [O1:50–54](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/stage1-override/gpu0-stage1-override-1793929151155255357.jsonl#L50-L54), [O2:50–54](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/override-520/gpu0-stage1-override-1793930007183451370.jsonl#L50-L54). Первый post-write config snapshot следует
+  за third before_mmio примерно на 15.05 / 13.16 мс соответственно;
+  это не измеренная аппаратная latency latch. `capability_gen2=false`
+  обозначает **согласованность CAP и CAP2**, не отсутствие бита Gen2 в CAP2.
+  Оба файла прекращаются после третьей записи; recovery_writes=false.
+* **C:** [C:4–6](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/cap-speed-result/gpu0-stage1-cap-speed-1793930108244936087.jsonl#L4-L6) непосредственно сохраняет mask=30000,
+  `8C1C0:10032→20032`, полный точный readback и первый CAP `00453C42`.
+  Все 20 samples ([C:6–25](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/cap-speed-result/gpu0-stage1-cap-speed-1793930108244936087.jsonl#L6-L25)) дают CAP2=6, GPU STA=1041, Root STA=3041.
+  Наблюдение длится около 1.994 с от первого до последнего sample;
+  [C:26](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/cap-speed-result/gpu0-stage1-cap-speed-1793930108244936087.jsonl#L26) корректно разделяет capability_gen2=true и link_gen2_x4=false.
+  Итог нормальный, не abort. Полного BAR0 post-snapshot после записи нет;
+  неизменность остальных слов во всём интервале не измерялась.
+
+Во всём наборе: **9 MMIO intents + 9 совпадающих readback** (2+3+3+1),
+только offsets 2241C, 8841C, 8872C, 8C1C0. Нет intent/readback записи
+в 8C040, VSEC, дополнительные MMIO, bind/reset или автоматическое
+восстановление. Отсутствие записей в журнале не является независимым
+доказательством отсутствия любых сторонних writers.
+
+### TLS/retrain, LBMS и AER
+
+В реальном R (не RP dry-run) последовательность однозначна:
+
+1. [R:8–9](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/cap-retrain-result/gpu0-stage2-cap-retrain-1793930796885371367.jsonl#L8-L9): GPU offset A8, `LNKCTL2:0000→0002`, readback=0002.
+2. [R:12–13](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/cap-retrain-result/gpu0-stage2-cap-retrain-1793930796885371367.jsonl#L12-L13): Root offset C0, `0043→0042`, readback=0042.
+   Сохранён bit6; HASD bit5=0 до и после с обеих сторон. Нельзя говорить,
+   что Root исходно имел TLS=1: он имел TLS=3, GPU — TLS=0.
+3. [R:14–16](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/cap-retrain-result/gpu0-stage2-cap-retrain-1793930796885371367.jsonl#L14-L16): оба TLS=2 подтверждены port snapshots; затем один
+   `before_retrain`, Root offset A0, `LNKCTL:0040→0060` (RL bit5).
+4. [R:17–18](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/cap-retrain-result/gpu0-stage2-cap-retrain-1793930796885371367.jsonl#L17-L18): первый Root snapshot имеет CTL=0040 (RL уже не установлен),
+   STA=7041; GPU STA=1041. Повторных before_retrain нет.
+   [R:173–174](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/cap-retrain-result/gpu0-stage2-cap-retrain-1793930796885371367.jsonl#L173-L174): retrains=1, gen2_x4=false, STOP no retry.
+
+Точность утверждения о выполнении: TLS имеет явные readback. Для RL
+отдельного `after_retrain`/bus ACK нет; есть намерение, счётчик и изменение
+Root status. Совокупность согласуется с одной выполненной записью из кода,
+но журнал не является аппаратной трассой каждого обращения.
+
+Теперь имеется **до/после baseline LBMS именно этого опыта**:
+последний Root STA=3041 в R:14, первый 7041 в R:17. XOR=4000 — изменился
+только LBMS, не DLLLA (она была 1), не скорость и не ширина. Прежнее
+сравнение Root7041 с GPU1041 даёт XOR6000 и отвечает на другой вопрос.
+LBMS появился в этом интервале вокруг запроса RL; без concurrent-writer
+trace нельзя строго доказать единственную причину, но связь по времени
+теперь зарегистрирована. LBMS не доказывает достижение 5 GT/s.
+
+Все **82 Root port snapshots**: четыре 3041 до RL, 78 значений 7041 после;
+все **82 GPU snapshots**: 1041. Training=0 во всех сохранённых статусах,
+скорость/ширина всегда Gen1 x4. Первая post-RL запись журнала отстоит от
+`before_retrain` на ~6.738 мс; это разность logger wall timestamps, не
+точная длительность RL или LTSSM. Максимальные интервалы между port log
+records: ~68.908 мс Root, ~69.025 мс GPU. Пять секунд наблюдения после
+RL не исключают невидимые краткие попытки/возвраты между этими чтениями.
+
+Во всех 164 snapshots raw AER uncor/cor/device_status, Root root_status
+и **все** сохранённые kernel AER counters равны нулю, включая последние
+[R:171–172](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/cap-retrain-result/gpu0-stage2-cap-retrain-1793930796885371367.jsonl#L171-L172). Это сильнее одного финального AER snapshot, но не доказывает
+отсутствие физического training/fallback. Полного kernel journal/Xid stream
+в этих JSONL нет. `8C040=20085800` доказан в R:2 **до** TLS/retrain;
+финального BAR0 snapshot на отрицательном пути R нет. Нельзя утверждать,
+что этот опыт непосредственно измерил SPEED после RL.
+
+### Read-only наблюдения и дополнительные ограничения
+
+[D0:2](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/t5600-dual-first/gpu0-dual-1794004110508195856.jsonl#L2) фиксирует отказ при bound GPU без samples: это ожидаемый STOP,
+не сбой MMIO. В успешных D/P1/P2/F preflight: identity=1B8710DE,
+command=2 (MSE=1/BME=0), PMCSR=8 (**D-state по bits1:0=0**, не требуется
+полное слово 0), power_state=D0, mapping=PROT_READ; см. [D:2](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/t5600-dual-first/gpu0-dual-1794004274508572209.jsonl#L2), [F:2](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/t5600-fresh-fast-coverage/gpu0-dual-profile-1794005450984539954.jsonl#L2).
+Root identity=3C048086, PCIe cap90, LNKSTA offset A2.
+
+Проверены все **67 767 Root samples** в Q/D/P1/P2/F: только 3041;
+все **684 GPU samples** D/P1/P2/F: только 20085800, ACTIVE=0,
+directive=0, SPEED=2. Summary counts, timing quantiles и max согласуются
+с raw sample timestamps. Финальные записи:
+[Q:63654](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/t5600-root-sampler/root0-lnksta-1794002799062628713.jsonl#L63654), [D:875](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/t5600-dual-first/gpu0-dual-1794004274508572209.jsonl#L875), [P1:2866](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/t5600-profile-reference/gpu0-dual-profile-1794005123518674721.jsonl#L2866), [P2:5695](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/t5600-profile-fresh-fast/gpu0-dual-profile-1794005316984632966.jsonl#L5695), [F:1871](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/t5600-fresh-fast-coverage/gpu0-dual-profile-1794005450984539954.jsonl#L1871).
+Ошибок чтения, overwrites и Training/DLL skips в этих captures нет;
+все GPU samples имеют безопасный postcheck. No-transition — только
+наблюдение этих коротких окон, не опыт с CHANGE_SPEED.
+
+Дополнительные нюансы, которые нельзя скрыть словом «ошибок нет»:
+
+* В Q capture_elapsed=250003300 нс: последний read завершился после
+  deadline, overrun=3300 нс, оба соответствующих flags=true. Потерь нет,
+  но длительность не ровно 250 мс. Read max=31.595 мкс; conservative
+  max gap=36.966 мкс — разные величины ([Q:63654](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/t5600-root-sampler/root0-lnksta-1794002799062628713.jsonl#L63654)).
+* В P1 есть три `profile_span failed=true` в последнем цикле 99:
+  [P1:2160](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/t5600-profile-reference/gpu0-dual-profile-1794005123518674721.jsonl#L2160), [P1:2174–2175](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/t5600-profile-reference/gpu0-dual-profile-1794005123518674721.jsonl#L2174-L2175). В P2 — три в цикле 197:
+  [P2:4316–4317](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/t5600-profile-fresh-fast/gpu0-dual-profile-1794005316984632966.jsonl#L4316-L4317), [P2:4321](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/t5600-profile-fresh-fast/gpu0-dual-profile-1794005316984632966.jsonl#L4321). Capture summary при этом duration/error=null;
+  spans заканчиваются у границы 50 мс, число MMIO complete cycles 98/196.
+  Это согласуется с выходом по deadline через exception в текущем коде,
+  а не с аппаратной read error. Сам span reason не записан, поэтому
+  интерпретация причины — **вывод**, не отдельное измерение. `failed=true`
+  нельзя ни игнорировать, ни объявлять доказательством потери GPU.
+* Profile spans выгружены раньше sample rows и вложены по фазам; порядок
+  строк всего JSONL не является глобальным порядком событий capture.
+  Для сопоставления нужны start/end + clock_origin_ns, с учётом вложенности.
+* Root после R имел LBMS=1, а в Q/D/P1/P2/F он снова 0. Между файлами
+  около 20 часов и нет непрерывной трассы/boot ID/записи очистки. Почему
+  sticky bit исчез — неизвестно; это не повод молча связать их в один run.
+* Profiling reference/fresh-fast сохраняет шесть driver guards на complete
+  cycle; ускорение не достигнуто уменьшением их частоты. Независимые p50
+  из P1/P2: state_checks 359.446/175.136 мкс, driver_binding
+  41.558/13.927 мкс на вызов, MMIO bracket 3.383/1.646 мкс,
+  GPU sample cycle 504.272/253.538 мкс. В F без profiling cycle=187.023 мкс,
+  conservative max с границами=232.822 мкс. Вложенные медианы нельзя
+  складывать; эти различия не являются гарантией максимальной задержки.
+
+### Что изменил аудит в решении
+
+Подготовленные capability действительно отличались от заводских; перед
+единственным RL оба TLS были согласованно 2, HASD не являлся установленным
+ограничителем. LBMS получил доказанный baseline и интервал изменения.
+Но финальный SPEED после RL не измерен, промежуточные Training/LTSSM
+могли быть пропущены, а восстановление baseline между некоторыми запусками
+не документировано. Нового доказанного внутреннего gate в этих логах нет.
+
+**Журнала аварийной `20085800→20045800` среди всех 13 файлов нет.**
+Причина прежнего Link Down остаётся неизвестной. Нельзя сравнить с ним
+полный pre-write baseline, точную ширину доступа, питание/ownership или
+порядок внутренних событий. Кандидаты A/B/C не получили нового основания
+для аппаратного запуска. Следующий пробел для offline-анализа — исходный
+crash log (если сохранился), происхождение межзапусковых восстановлений,
+точная версия исполнявшегося кода и target-matched .47/580 RM сведения.
+Ни повтор аварийного SPEED, ни подготовка prefix, ни аппаратные действия
+для заполнения этих пробелов этим аудитом не предлагаются.
