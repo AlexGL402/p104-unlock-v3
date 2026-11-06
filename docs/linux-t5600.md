@@ -1,8 +1,10 @@
 # T5600: staged Linux Gen2 experiment
 
-Status: **experimental, not hardware validated**. This change removes the write
-that caused the reported Link Down; it does not prove that the remaining path
-can unlock or retain Gen2. No hardware operations were performed during development.
+Status: **experimental, no hardware-validated Gen2 unlock**. The user ran the
+original two-switch Stage 1 on T5600: both exact readbacks succeeded, but Gen2
+LNKCAP2 did not appear within two seconds. Stage 2 was not run, GPU 1 was unchanged.
+The new `stage1-override` has only offline validation. No hardware operations were
+performed by the development agent.
 No VBIOS/EFI/driver installation changes, startup service, automatic rebind,
 reset, width arm, recovery writes, or background holder are implemented.
 
@@ -57,6 +59,10 @@ a new reviewed experiment and separate hardware authorization.
   bit, flush via aligned dword readback, observe capability for at most 2 seconds.
   At most two writes; no PCI writes or retrain. Both LNKCAP2 vector bits 1/2
   and LNKCAP maximum speed must advertise Gen2 before reporting success.
+- Stage 1 override: separate `stage1-override` mode with its own BAR0 allowlist
+  `8872C → 2241C → 8841C`, factory baseline only. No config write permission,
+  TLS, retrain, reset, driver bind or CUDA. See the next section for early-stop
+  behavior and its independent journal. Original Stage 1 cannot write 8872C.
 - Stage 2: separate invocation and explicit `--authorize-stage2`; recheck current
   capability, both link states, and baseline with exactly the two Stage 1 changes.
   Set both TLS fields to 2 with 16-bit writes preserving other bits; verify both;
@@ -71,7 +77,101 @@ a new reviewed experiment and separate hardware authorization.
   Failed operations may leave the two switches or TLS modified: power-cycle recovery
   remains manual. Logs are not permission tokens; Stage 2 validates live state.
 
-## T5600 validation procedure (not executed)
+## New experiment: `stage1-override` on GPU 0
+
+The negative Stage 1 result establishes that the two switches alone did not latch
+Gen2 within the measured window on this machine. It does not establish that SPEED
+must be written. This experiment tests the source-ordered **three-register prefix**
+of C# `ApplyLiveGroup` / Python `LIVE_GROUP`, with observation between writes,
+instead of repeating the entire group. FUSE_OVERRIDE was present in those source
+paths and absent from the unsuccessful minimal experiment. Its sufficiency and
+safety without the rest of the group are not established by the sources.
+
+The entire eight-register BAR0 baseline must match exactly before the first write:
+
+| Offset | Required factory value |
+| --- | --- |
+| `0x8872C` | `0x00000000` |
+| `0x2241C` | `0x00000000` |
+| `0x8841C` | `0xC0B46500` |
+| `0x8C2C0` | `0x068711B3` |
+| `0x8C300` | `0x040A00C0` |
+| `0x8C040` | `0x20085800` |
+| `0x8C1C0` | `0x00010032` |
+| `0x88610` | `0x00000000` |
+
+**The retained values from the user's Stage 1 (`2241C=81`, `8841C=C0B40500`)
+are not accepted.** Do not run the apply command against that state. Establishing
+the factory baseline is a separate hardware action requiring its own permission;
+this mode does not restore registers, rebind, reset or power-cycle anything.
+No repeat of the already-established unbind/rebind diagnostics is required.
+
+With factory baseline established and GPU 0 already unbound using the known
+per-device method, inspect the read-only plan first:
+
+```sh
+sudo python3 p104_gen2_linux.py --mode stage1-override \
+  --log-dir work/t5600-override-plan
+```
+
+This only prints the actual registers and proposed three-write sequence. Apply
+performs the strict baseline and ownership/D0/MSE/BME/link preflight. Do not run
+the following command until a separate authorization for actual hardware writes:
+
+```sh
+sudo python3 p104_gen2_linux.py --mode stage1-override --apply \
+  --confirm-bdf 0000:03:00.0 --log-dir work/t5600-override
+```
+
+Maximum write sequence, once each:
+
+1. `8872C: (old & ~0xF) | 6` → `0x00000006`.
+2. `2241C: old | 0x81` → `0x00000081`.
+3. `8841C: old & ~0x6000` → `0xC0B40500`.
+
+After each write: identity check, exact dword readback (posted-write flush), and
+raw GPU **and Root Port** LNKCAP, LNKCAP2, LNKSTA, LNKCTL and LNKCTL2 snapshot.
+Observe for up to two seconds per step using reads only (at most about six seconds
+total observation plus I/O). Each observation also rechecks the last readback.
+Before the next write, verify the entire expected BAR0 prefix state again.
+No masked-write verification hides a change outside the intended bits.
+
+If GPU LNKCAP2's Gen2 support bit appears after the first or second write, stop
+without issuing the next write. Complete capability success additionally requires
+both ends' LNKCAP maximum speed >=2 and LNKCAP2 vector bits 1/2 set. A partial or
+inconsistent announcement also stops, with a negative result, rather than finishing
+the group. If GPU LNKCAP changes ahead of LNKCAP2, the same conservative stop applies.
+Throughout this capability-only experiment both negotiated links must remain idle
+Gen1 x4; training, changed speed/width, Link Disable, or inactive DLL when reporting
+is supported cause an abort. A change to Gen2 link state itself is an unexpected
+transition to review, not permission to continue.
+
+Every run creates a separate exclusive JSONL file:
+`gpu0-stage1-override-<time_ns>.jsonl` in the chosen directory. The path is printed
+before hardware access, including runs which later fail. Every row includes mode
+and apply/plan status, and is flushed/fsynced. Important events:
+
+- `override_baseline`: exact expected and actual BAR0 maps.
+- `before_mmio`, `after_mmio`: step, offset, intent and actual readback.
+- `override_sample`: step, observation phase, readback and raw links on both ends.
+- `override_result`: positive capability or negative `no_latch` /
+  `inconsistent_capability`, number of writes, last offset, early-stop flag.
+- `abort`: failure reason; no automatic recovery writes. If device access is lost,
+  a complete after-write snapshot may be unavailable; the durable intent and abort
+  remain, and BAR0 is not accessed after detected config loss.
+
+Return the complete JSONL for review, whether positive or negative. Capability
+success is not Gen2 x4 link success. **Do not launch Stage 2 after this experiment**:
+its existing baseline deliberately rejects FUSE_OVERRIDE=6 and any early prefix.
+There is no chained TLS/retrain/CUDA step, no retries and no automatic rollback.
+Writes to `8C040`, `8C1C0` and `88610` are denied by the backend allowlist.
+GPU 1 and its root remain outside this experiment.
+
+## Original two-switch procedure (user reported no latch; do not repeat)
+
+The following documents the original Stage 1/Stage 2 interface. It is not a
+fallback or continuation of `stage1-override`; use the new procedure above for
+the next proposed experiment.
 
 Existing unbind/rebind and BAR0-read diagnostics need not be repeated. Before any
 hardware experiment, review the Stage 1 plan and obtain separate authorization

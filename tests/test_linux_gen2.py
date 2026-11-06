@@ -314,5 +314,233 @@ class Tests(unittest.TestCase):
             p.cuda_check()
 
 
+class OverrideFake(Fake):
+    def __init__(self, latch_after=3):
+        super().__init__()
+        self.latch = False
+        self.latch_after = latch_after
+        self.hook = lambda hw, off: None
+
+    def cfg_write(self, *args):
+        raise AssertionError('stage1-override attempted a PCI config write')
+
+    def bar_write(self, off, value):
+        if off not in (0x8872C, 0x2241C, 0x8841C):
+            raise AssertionError('forbidden BAR0 write')
+        super().bar_write(off, value)
+        if self.latch_after == len(self.writes):
+            self.data[(p.GPU, 0x6C)] = 6
+            self.data[(p.GPU, 0x4C)] = 0x42
+        self.hook(self, off)
+
+    def close(self):
+        pass
+
+
+class OverrideTests(unittest.TestCase):
+    def setUp(self):
+        self.hw = OverrideFake()
+        self.events = []
+        self.exp = p.Experiment(self.hw, lambda event, **kw: self.events.append((event, kw)),
+                                self.hw.sleep, lambda: self.hw.t)
+
+    def test_success_order_and_both_end_snapshots_after_each_write(self):
+        self.exp.stage1_override()
+        self.assertEqual(self.hw.writes, [('bar', 0x8872C, 6), ('bar', 0x2241C, 0x81),
+                                         ('bar', 0x8841C, 0xC0B40500)])
+        samples = [kw for event, kw in self.events
+                   if event == 'override_sample' and kw['phase'] == 'after_write']
+        self.assertEqual([kw['offset'] for kw in samples], [0x8872C, 0x2241C, 0x8841C])
+        for sample, write in zip(samples, self.hw.writes):
+            self.assertEqual(sample['readback'], write[2])
+            self.assertEqual(set(sample['links']), {p.GPU, p.ROOT})
+            for link in sample['links'].values():
+                self.assertTrue({'cap', 'cap2', 'sta'} <= set(link))
+        self.assertTrue(self.events[-1][1]['capability_gen2'])
+        for off in (0x8C040, 0x8C1C0, 0x88610):
+            self.assertEqual(self.hw.regs[off], p.EXPECTED_BAR0[off])
+
+    def test_early_success_at_first_or_second_write(self):
+        for step in (1, 2):
+            self.setUp()
+            self.hw.latch_after = step
+            self.exp.stage1_override()
+            self.assertEqual(len(self.hw.writes), step)
+            self.assertTrue(self.events[-1][1]['early_stop'])
+            self.assertEqual(self.events[-1][1]['writes'], step)
+
+    def test_delayed_latch_prevents_next_write(self):
+        self.hw.latch_after = None
+        sleep = self.hw.sleep
+        def delayed(seconds):
+            sleep(seconds)
+            if self.hw.t >= .3:
+                self.hw.data[(p.GPU, 0x6C)] = 6
+                self.hw.data[(p.GPU, 0x4C)] = 0x42
+        self.exp.sleep = delayed
+        self.exp.stage1_override()
+        self.assertEqual(len(self.hw.writes), 1)
+        self.assertGreaterEqual(self.hw.t, .3)
+
+    def test_partial_capability_stops_without_more_writes(self):
+        for field, value in ((0x6C, 6), (0x4C, 0x42)):
+            self.setUp()
+            self.hw.hook = lambda hw, off: hw.data.__setitem__((p.GPU, field), value)
+            with self.assertRaisesRegex(p.Stop, 'inconsistent'):
+                self.exp.stage1_override()
+            self.assertEqual(len(self.hw.writes), 1)
+            self.assertFalse(self.events[-1][1]['capability_gen2'])
+
+    def test_every_baseline_register_is_mandatory(self):
+        for off in p.EXPECTED_BAR0:
+            self.setUp()
+            self.hw.regs[off] ^= 1
+            with self.assertRaisesRegex(p.Stop, 'baseline mismatch'):
+                self.exp.stage1_override()
+            self.assertFalse(self.hw.writes)
+            self.assertEqual(self.events[-1][0], 'override_baseline')
+
+    def test_previous_stage1_residue_is_refused(self):
+        self.hw.regs[0x2241C] = 0x81
+        self.hw.regs[0x8841C] = 0xC0B40500
+        with self.assertRaisesRegex(p.Stop, 'baseline mismatch'):
+            self.exp.stage1_override()
+        self.assertFalse(self.hw.writes)
+
+    def test_loss_after_each_write_has_no_retry_or_mmio_after_loss(self):
+        for step, (off, _, _) in enumerate(p.OVERRIDE_PATCHES, 1):
+            self.setUp()
+            self.hw.lose_at = off
+            with self.assertRaisesRegex(p.Stop, 'lost'):
+                self.exp.stage1_override()
+            self.assertEqual(len(self.hw.writes), step)
+
+    def test_mismatched_readback_stops_at_each_step(self):
+        for step in (1, 2, 3):
+            self.setUp()
+            def corrupt(hw, off):
+                if len(hw.writes) == step:
+                    hw.regs[off] ^= 1
+            self.hw.hook = corrupt
+            with self.assertRaisesRegex(p.Stop, 'readback mismatch'):
+                self.exp.stage1_override()
+            self.assertEqual(len(self.hw.writes), step)
+            self.assertEqual(self.events[-1][0], 'override_sample')
+
+    def test_link_down_or_training_or_dll_inactive_stops(self):
+        for dev, sta, cap in ((p.GPU, 0, 0x41), (p.ROOT, 0x1841, 0x42),
+                              (p.ROOT, 0x1041, 0x100042)):
+            self.setUp()
+            def change(hw, off):
+                hw.data[(dev, 0x52)] = sta
+                hw.data[(dev, 0x4C)] = cap
+            self.hw.hook = change
+            with self.assertRaisesRegex(p.Stop, 'link changed'):
+                self.exp.stage1_override()
+            self.assertEqual(len(self.hw.writes), 1)
+
+    def test_no_latch_records_negative_result_without_fallback(self):
+        self.hw.latch_after = None
+        with self.assertRaisesRegex(p.Stop, 'no fallback/retrain'):
+            self.exp.stage1_override()
+        self.assertEqual(len(self.hw.writes), 3)
+        self.assertGreaterEqual(self.hw.t, 6)
+        self.assertEqual(self.events[-1][1]['reason'], 'no_latch')
+        self.assertFalse(self.events[-1][1]['capability_gen2'])
+
+    def test_unexpected_change_in_other_register_stops_before_next_write(self):
+        self.hw.hook = lambda hw, off: hw.regs.__setitem__(0x8C1C0, 0x20032)
+        with self.assertRaisesRegex(p.Stop, 'prefix baseline changed'):
+            self.exp.stage1_override()
+        self.assertEqual(len(self.hw.writes), 1)
+
+    def test_override_result_is_not_a_stage2_baseline(self):
+        self.exp.stage1_override()
+        with self.assertRaisesRegex(p.Stop, 'baseline mismatch'):
+            self.exp.stage2()
+        self.assertEqual(len(self.hw.writes), 3)
+
+    def test_backend_allowlist_is_mode_scoped_and_forbids_speed(self):
+        import ctypes
+        memory = (ctypes.c_ubyte * 0x90000)()
+        for override in (False, True):
+            backend = p.Linux(mmio_writable=True, override=override)
+            backend.mm = ctypes.addressof(memory)  # ordinary RAM, never sysfs
+            for off in (0x8C040, 0x8C1C0, 0x88610):
+                with self.assertRaises(p.Stop):
+                    backend.bar_write(off, 0)
+            if override:
+                backend.bar_write(0x8872C, 6)
+                self.assertEqual(backend.bar(0x8872C), 6)
+            else:
+                with self.assertRaises(p.Stop):
+                    backend.bar_write(0x8872C, 6)
+            with self.assertRaises(p.Stop):
+                backend.cfg_write(p.ROOT, 0x50, 2, 0x20)
+            backend.mm = None
+
+    def run_main(self, directory, apply=True):
+        from pathlib import Path
+        args = ['--mode', 'stage1-override', '--log-dir', str(directory)]
+        if apply:
+            args += ['--apply', '--confirm-bdf', p.GPU]
+        with patch.object(p, 'Linux', return_value=self.hw) as backend, \
+             patch.object(p, 'LOCK_PATH', Path(directory) / 'test.lock'), \
+             patch.object(p, 'cuda_check', side_effect=AssertionError('CUDA called')), \
+             contextlib.redirect_stdout(io.StringIO()):
+            result = p.main(args)
+        backend.assert_called_once_with(writable=False, mmio_writable=apply, override=True)
+        return result
+
+    def test_cli_plan_is_readonly_and_logs_separately(self):
+        import json
+        import tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as temp:
+            self.run_main(temp, apply=False)
+            self.run_main(temp, apply=False)
+            files = list(Path(temp).glob('gpu0-stage1-override-*.jsonl'))
+            self.assertEqual(len(files), 2)
+            rows = [json.loads(line) for line in files[0].read_text().splitlines()]
+            self.assertEqual(rows[-1]['event'], 'plan')
+            self.assertFalse(rows[-1]['hardware_writes'])
+            self.assertEqual(rows[-1]['bar0_patches'], [list(patch) for patch in p.OVERRIDE_PATCHES])
+            self.assertTrue(all(row['mode'] == 'stage1-override' for row in rows))
+            self.assertFalse(self.hw.writes)
+
+    def test_cli_apply_journal_records_success(self):
+        import json
+        import tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as temp:
+            self.assertEqual(self.run_main(temp), 0)
+            rows = [json.loads(line) for line in next(Path(temp).glob('*.jsonl')).read_text().splitlines()]
+            self.assertEqual(rows[-1]['event'], 'override_result')
+            self.assertTrue(rows[-1]['capability_gen2'])
+            self.assertEqual(sum(row['event'] == 'before_mmio' for row in rows), 3)
+
+    def test_cli_failure_keeps_intent_and_abort_journal(self):
+        import json
+        import tempfile
+        from pathlib import Path
+        self.hw.lose_at = 0x8872C
+        with tempfile.TemporaryDirectory() as temp:
+            with self.assertRaises(p.Stop):
+                self.run_main(temp)
+            rows = [json.loads(line) for line in next(Path(temp).glob('*.jsonl')).read_text().splitlines()]
+            self.assertEqual(rows[-1]['event'], 'abort')
+            self.assertFalse(rows[-1]['recovery_writes'])
+            self.assertEqual(sum(row['event'] == 'before_mmio' for row in rows), 1)
+            self.assertFalse(any(row['event'] == 'override_result' for row in rows))
+
+    def test_override_cli_still_requires_explicit_gpu0(self):
+        for bdf in ('', '0000:04:00.0'):
+            args = ['--mode', 'stage1-override', '--apply', '--confirm-bdf', bdf]
+            with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+                p.arguments(args)
+        args = p.arguments(['--mode', 'stage1-override', '--apply', '--confirm-bdf', p.GPU])
+        self.assertTrue(args.apply)
+
+
 if __name__ == '__main__':
     unittest.main()

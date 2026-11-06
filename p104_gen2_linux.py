@@ -15,8 +15,10 @@ import time
 GPU = '0000:03:00.0'
 ROOT = '0000:00:02.0'
 BASE = Path('/sys/bus/pci/devices')
-# Only these two BAR0 registers may be written; no speed/width/fuse triggers.
+# Each mode has its own BAR0 write allowlist; speed/width requests stay forbidden.
 PATCHES = ((0x2241C, 0x81, 0x81), (0x8841C, 0x6000, 0))
+OVERRIDE_PATCHES = ((0x8872C, 0xF, 6),) + PATCHES
+LOCK_PATH = Path('/run/lock/p104-gen2-linux.lock')
 EXPECTED_BAR0 = {0x8872C: 0, 0x2241C: 0, 0x8841C: 0xC0B46500,
                  0x8C2C0: 0x068711B3, 0x8C300: 0x040A00C0,
                  0x8C040: 0x20085800, 0x8C1C0: 0x00010032, 0x88610: 0}
@@ -46,9 +48,10 @@ def find_cap(hw, bdf, ident):
 
 
 class Linux:
-    def __init__(self, writable=False, mmio_writable=False):
+    def __init__(self, writable=False, mmio_writable=False, override=False):
         self.writable = writable
         self.mmio_writable = mmio_writable
+        self.bar0_patches = OVERRIDE_PATCHES if override else PATCHES
         self.libc = ctypes.CDLL(None, use_errno=True)
         self.libc.mmap.argtypes = (ctypes.c_void_p, ctypes.c_size_t, ctypes.c_int,
                                    ctypes.c_int, ctypes.c_int, ctypes.c_long)
@@ -96,7 +99,7 @@ class Linux:
         return checked(ctypes.c_uint32.from_address(self.mm + off).value)
 
     def bar_write(self, off, value):
-        if not self.mmio_writable or self.mm is None or off not in {p[0] for p in PATCHES}:
+        if not self.mmio_writable or self.mm is None or off not in {p[0] for p in self.bar0_patches}:
             raise Stop('BAR0 write access denied')
         ctypes.c_uint32.from_address(self.mm + off).value = value
 
@@ -164,7 +167,10 @@ class Experiment:
         if stage == 'stage2':
             for off, mask, value in PATCHES:
                 expected[off] = (expected[off] & ~mask) | value
-        if self.registers() != expected:
+        actual = self.registers()
+        if stage == 'stage1-override':
+            self.record('override_baseline', expected=expected, actual=actual)
+        if actual != expected:
             raise Stop('BAR0 baseline mismatch; no writes performed')
         root = self.links()[ROOT]
         if not (root['cap2'] & 4) or (root['cap'] & 15) < 2:
@@ -228,6 +234,77 @@ class Experiment:
         # One trigger only. Read-only bounded observation, never retry or roll back.
         self.observe_gen2(10, 2)
         self.record('stage2_result', link_gen2_x4=True, cuda_verified=False)
+
+    def override_sample(self, step, offset, readback, phase):
+        state = self.links()
+        self.record('override_sample', step=step, offset=offset, readback=readback,
+                    phase=phase, links=state)
+        if not self.link_ok(state, 1) or any(
+                v['cap'] & (1 << 20) and not v['sta'] & (1 << 13)
+                for v in state.values()):
+            raise Stop('link changed during stage1-override; no further writes')
+        return state
+
+    def override_capability_result(self, state, step, offset):
+        gpu = state[GPU]
+        # Stop even on partial advertisement: never "finish" the group once
+        # the Gen2 support bit appears, or LNKCAP changes ahead of LNKCAP2.
+        if not (gpu['cap2'] & 4 or (gpu['cap'] & 15) >= 2):
+            return False
+        complete = all((v['cap2'] & 6) == 6 and (v['cap'] & 15) >= 2
+                       for v in state.values())
+        self.record('override_result', capability_gen2=complete, writes=step,
+                    stopped_after_offset=offset, early_stop=step < len(OVERRIDE_PATCHES),
+                    reason='gen2_advertised' if complete else 'inconsistent_capability',
+                    links=state, retrain_performed=False)
+        if not complete:
+            raise Stop('inconsistent Gen2 capability; no further writes')
+        return True
+
+    def stage1_override(self):
+        """One source-ordered prefix experiment, with no PCI config writes.
+
+        Observe for up to two seconds after EACH write, so a delayed latch at
+        an earlier step prevents the next write. Polls are reads, not retries.
+        """
+        self.preflight('stage1-override')
+        expected = dict(EXPECTED_BAR0)
+        for step, (off, mask, value) in enumerate(OVERRIDE_PATCHES, 1):
+            self.guard()
+            actual = self.registers()
+            if actual != expected:
+                self.record('override_state_changed', expected=expected, actual=actual)
+                raise Stop('BAR0 prefix baseline changed; no further writes')
+            state = self.override_sample(step - 1, None, None, 'before_write')
+            if self.override_capability_result(state, step - 1, None):
+                return
+            old = actual[off]
+            new = (old & ~mask) | value
+            self.record('before_mmio', step=step, offset=off, old=old, new=new)
+            self.hw.bar_write(off, new)
+            self.alive()
+            rb = checked(self.hw.bar(off))
+            self.record('after_mmio', step=step, offset=off, readback=rb)
+            state = self.override_sample(step, off, rb, 'after_write')
+            if rb != new:
+                raise Stop('BAR0 readback mismatch; no further writes')
+            expected[off] = new
+            deadline = self.clock() + 2
+            while True:
+                if self.override_capability_result(state, step, off):
+                    return
+                if self.clock() >= deadline:
+                    break
+                self.sleep(.1)
+                self.alive()
+                rb = checked(self.hw.bar(off))
+                state = self.override_sample(step, off, rb, 'observe')
+                if rb != new:
+                    raise Stop('BAR0 readback changed while observing; no further writes')
+        self.record('override_result', capability_gen2=False, writes=len(OVERRIDE_PATCHES),
+                    stopped_after_offset=off, early_stop=False, reason='no_latch',
+                    links=state, retrain_performed=False)
+        raise Stop('override prefix did not latch Gen2; no fallback/retrain')
 
     def verify_cuda(self, action):
         if not self.hw.driver():
@@ -296,15 +373,15 @@ def cuda_check():
 
 def arguments(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--mode', choices=('probe', 'stage1', 'stage2', 'verify-cuda'), default='probe')
+    p.add_argument('--mode', choices=('probe', 'stage1', 'stage1-override', 'stage2', 'verify-cuda'), default='probe')
     p.add_argument('--apply', action='store_true', help='execute the selected stage; otherwise plan only')
     p.add_argument('--confirm-bdf', default='')
     p.add_argument('--authorize-stage2', action='store_true', help='separate permission for TLS and one root retrain')
     p.add_argument('--authorize-cuda', action='store_true', help='allow a CUDA context/transfer on GPU 0')
     p.add_argument('--log-dir', type=Path, default=Path('work/linux-backup'))
     a = p.parse_args(argv)
-    if a.apply and a.mode not in ('stage1', 'stage2'):
-        p.error('--apply requires stage1 or stage2')
+    if a.apply and a.mode not in ('stage1', 'stage1-override', 'stage2'):
+        p.error('--apply requires stage1, stage1-override or stage2')
     if (a.apply or a.mode == 'verify-cuda') and a.confirm_bdf != GPU:
         p.error(f'explicit --confirm-bdf {GPU} required')
     if a.apply and a.mode == 'stage2' and not a.authorize_stage2:
@@ -319,17 +396,21 @@ def main(argv=None):
     if platform.machine() != 'x86_64':
         raise Stop('only x86_64 MMIO access is supported')
     a.log_dir.mkdir(parents=True, exist_ok=True)
-    with open('/run/lock/p104-gen2-linux.lock', 'a') as lock:
+    with open(LOCK_PATH, 'a') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        path = a.log_dir / f'gpu0-{time.time_ns()}.jsonl'
+        path = a.log_dir / f'gpu0-{a.mode}-{time.time_ns()}.jsonl'
+        print('Log:', path, flush=True)
         with path.open('x') as log:
             def record(event, **values):
-                row = json.dumps(dict(ts=time.time(), event=event, **values))
+                row = json.dumps(dict(ts=time.time(), mode=a.mode, apply=a.apply,
+                                      event=event, **values))
                 log.write(row + '\n')
                 log.flush()
                 os.fsync(log.fileno())
                 print(row, flush=True)
-            hw = Linux(writable=a.apply, mmio_writable=a.apply and a.mode == 'stage1')
+            hw = Linux(writable=a.apply and a.mode == 'stage2',
+                       mmio_writable=a.apply and a.mode in ('stage1', 'stage1-override'),
+                       override=a.mode == 'stage1-override')
             try:
                 hw.topology()
                 exp = Experiment(hw, record)
@@ -338,10 +419,11 @@ def main(argv=None):
                 if a.mode == 'verify-cuda':
                     exp.verify_cuda(cuda_check)
                 elif a.apply:
-                    getattr(exp, a.mode)()
+                    getattr(exp, a.mode.replace('-', '_'))()
                 else:
-                    record('plan', mode=a.mode, registers=exp.registers(),
-                           stage1_bar0=PATCHES, stage2='TLS=2 both ends; root retrain once',
+                    record('plan', registers=exp.registers(),
+                           bar0_patches=OVERRIDE_PATCHES if a.mode == 'stage1-override' else PATCHES,
+                           pci_writes='TLS=2 both ends; root retrain once' if a.mode == 'stage2' else None,
                            hardware_writes=False)
             except BaseException as exc:
                 record('abort', reason=f'{type(exc).__name__}: {exc}', recovery_writes=False)
