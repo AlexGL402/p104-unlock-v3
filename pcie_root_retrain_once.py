@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GPU0 one-shot Root RL: exactly 0040 -> 0060 at 00:02.0 config A0, word."""
+"""GPU0 post-GROUP one-shot Root RL: exactly 0040 -> 0060 at 00:02.0 config A0, word."""
 import argparse
 import fcntl
 import json
@@ -14,9 +14,11 @@ import pcie_bar0_readonly as ro
 from design.p104_bar0_ro_build import load  # Read-only native exports only.
 
 EXPECTED = dict(ro.CAP_READY)
-EXPECTED[0x8C040] = 0x20045800
+EXPECTED.update({0x8C040: 0x20045800, 0x8C1C0: 0x00120032,
+                 0x88610: 0x00000001})
 ROOT_CONTROL, OLD, NEW = 0xA0, 0x0040, 0x0060
 OBSERVATION_NS = 2_000_000_000
+STABILITY_NS = 100_000_000
 
 
 class Retrain(ro.Adapter):
@@ -29,6 +31,7 @@ class Retrain(ro.Adapter):
         self.post_speed = None
         self.root_samples = self.root_changes = 0
         self.training_seen = False
+        self.root_gen2_stable = False
 
     def record(self, event, **fields):
         if event == 'cleanup':
@@ -157,8 +160,8 @@ class Retrain(ro.Adapter):
             raise ro.Stop('Root Gen3 x16 capability mismatch')
         if root['ctl'] != OLD or gpu['ctl'] & 0x30:
             raise ro.Stop('Link Control not idle/baseline')
-        if any(v['ctl2'] & 15 != 2 or v['ctl2'] & 0x810 for v in links.values()):
-            raise ro.Stop('both TLS must already be 2, compliance off')
+        if (gpu['ctl2'], root['ctl2']) != (0x0002, 0x0042):
+            raise ro.Stop('exact GPU/Root Link Control 2 must be 0002/0042')
         if not self.attempted and any(v['sta'] & 0x3FF != 0x41 for v in links.values()):
             raise ro.Stop('initial link must be Gen1 x4 on both ends')
         if len({v['sta'] & 15 for v in links.values()}) != 1:
@@ -192,7 +195,7 @@ class Retrain(ro.Adapter):
         values = {o: self.read_word(o) for o in EXPECTED}
         self.record('bar_baseline', expected=EXPECTED, actual=values)
         if values != EXPECTED:
-            raise ro.Stop('exact post-SPEED prepared BAR0 baseline required')
+            raise ro.Stop('exact post-GROUP prepared BAR0 baseline required')
         self.verify_links()
 
     def admit(self):
@@ -204,6 +207,7 @@ class Retrain(ro.Adapter):
 
     def observe(self, deadline, initial):
         last, previous = None, None
+        stable_since = None
         pending = initial
         while (pending is not None or self.clock() < deadline) and self.root_samples < 100000:
             sample = pending if pending is not None else self.poll_root()
@@ -218,6 +222,9 @@ class Retrain(ro.Adapter):
                     raise ro.Stop('Root transition record limit')
                 previous = signature
             last = sample
+            settled = (not sample['training'] and sample['control'] == OLD and
+                       not sample['pending'] and sample['speed'] == 2 and sample['width'] == 4)
+            stable_since = (sample['start_ns'] if stable_since is None else stable_since) if settled else None
         if last is None:
             raise ro.Stop('no Root observation inside two-second window')
         if self.root_samples >= 100000 and self.clock() < deadline:
@@ -226,6 +233,11 @@ class Retrain(ro.Adapter):
                     deadline_ns=deadline, last=last)
         if last['training'] or last['control'] != OLD or last['pending']:
             raise ro.Stop('Root training/RL/pending timeout; no endpoint access')
+        stable_ns = 0 if stable_since is None else last['end_ns']-stable_since
+        self.record('root_stability', gen2_stable_ns=stable_ns, required_ns=STABILITY_NS)
+        self.root_gen2_stable = stable_since is not None and stable_ns >= STABILITY_NS
+        if stable_since is not None and stable_ns < STABILITY_NS:
+            raise ro.Stop('Root Gen2 stability window too short; no second trigger')
         return last
 
     def trigger(self):
@@ -287,7 +299,7 @@ def run(adapter, apply):
             adapter.record('final_state', links=links, speed=adapter.post_speed)
             if adapter.post_speed != EXPECTED[0x8C040]:
                 raise ro.Stop('post-retrain internal SPEED drift; no rewrite')
-            if not result['gen2_observed']:
+            if not result['gen2_observed'] or not adapter.root_gen2_stable:
                 raise ro.Stop('Gen2 x4 not obtained; no second trigger')
             result.update(result='PASS', reason='gen2_x4_both_ends')
         else:
@@ -354,6 +366,7 @@ def main():
             log.write(json.dumps(row, sort_keys=True)+'\n')
             log.flush()
         emit(dict(event='start', gpu=ro.GPU, root=ro.ROOT, kernel=platform.release(), apply=args.apply,
+                  baseline='post-group-bit20-vsec1', expected_bar=EXPECTED,
                   only_write=dict(offset=ROOT_CONTROL, size=2, old=OLD, new=NEW),
                   observation_ns=OBSERVATION_NS, mmio_writes=False, tls_writes=False))
         context = multiprocessing.get_context('spawn')

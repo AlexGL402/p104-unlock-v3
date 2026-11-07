@@ -125,7 +125,25 @@ class RootRetrainOnceTests(unittest.TestCase):
         result = self.apply()
         self.assertEqual(result['result'], 'FAIL')
         self.assertEqual(self.writes, [])
-        self.assertIn('post-SPEED prepared', result['reason'])
+        self.assertIn('post-GROUP prepared', result['reason'])
+
+    def test_pre_group_baselines_rejected_without_write(self):
+        for offset, value in ((0x88610, 0), (0x8C1C0, 0x00020032)):
+            with self.subTest(offset=hex(offset)):
+                ram = bytearray(self.original_bar)
+                ram[offset:offset+4] = value.to_bytes(4, 'little')
+                self.fixture.bar.write_bytes(ram)
+                result = self.apply()
+                self.assertEqual(result['result'], 'FAIL')
+                self.assertFalse(result['retrain_attempted'])
+                self.assertEqual(self.writes, [])
+
+    def test_gen2_only_at_end_does_not_establish_stability(self):
+        sample = dict(raw=0x7042, control=0x40, pending=False, training=False,
+                      speed=2, width=4, start_ns=0, end_ns=20_000_000)
+        with self.assertRaisesRegex(retrain.ro.Stop, 'stability window too short'):
+            self.adapter.observe(0, sample)
+        self.assertEqual(self.writes, [])
 
     def test_gpu_command_must_be_exactly_0002(self):
         self.change(self.fixture.gpu/'config', 4, 0x402)
