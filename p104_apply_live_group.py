@@ -33,6 +33,8 @@ class LiveGroup(ro.Adapter):
         self.frozen = None
 
     def record(self, event, **fields):
+        if event == 'baseline':
+            fields['profile'] = self.initial_state
         if event == 'cleanup':
             fields.pop('device_writes', None)
             fields.update(store_calls_returned=self.returned_stores)
