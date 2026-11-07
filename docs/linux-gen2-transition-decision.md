@@ -1,5 +1,13 @@
 # P104 / T5600: решение о переходе с Gen1 на Gen2
 
+Новое source-level расследование: [Root cause investigation](linux-gen2-root-cause-investigation.md).
+В исходном Linux-порте найден скрытый clear destination внутри CPython
+`struct.pack_into`, вызываемой прямо на MMIO. RAM-only тест подтверждает
+промежуточный ноль. Это ведущее объяснение аварии, ранее не учитывавшееся
+в сравнении A–E; связь с точным crash runtime и применение нуля GPU ещё
+не доказаны. Журнальный Evidence audit ниже сохраняет силу. Hardware NO-GO
+остаётся: устранение serializer-дефекта не подтверждает устойчивый Gen2/CUDA.
+
 ## Решение
 
 **Новый аппаратный эксперимент с SPEED или CHANGE_SPEED пока не выбран.**
