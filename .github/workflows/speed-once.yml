@@ -1,0 +1,18 @@
+name: SPEED-only one-shot policy (fixtures only)
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  speed-policy:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 -m unittest discover -s tests -p 'test_speed_once.py' -v
+      - run: python3 -m design.p104_speed_build --directory work/speed-native
+      - uses: actions/upload-artifact@v4
+        with:
+          name: speed-only-native-audit
+          path: work/speed-native/p104_speed_once.json
