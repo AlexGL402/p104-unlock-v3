@@ -1,5 +1,10 @@
 # P104 / T5600: расследование причины Link Down
 
+Продолжение: [MMIO primitive audit](linux-gen2-mmio-primitive-audit.md) —
+проверка provenance snapshot, официальной Ubuntu-сборки CPython, machine
+code и трёх RAM методов; изолированный native read/write prototype и
+критерии допуска. Это не hardware executor; SPEED/CHANGE_SPEED остаются NO-GO.
+
 ## Главный результат и решение
 
 **Найдено принципиальное программное отличие Windows и исходного Linux-порта:

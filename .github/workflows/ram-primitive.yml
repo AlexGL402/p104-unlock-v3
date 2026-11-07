@@ -1,0 +1,19 @@
+name: Owned-RAM primitive and assembly audit (no GPU)
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  ram-native:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: cc --version
+      - run: python3 -m unittest discover -s tests -p 'test_ram_primitive.py' -v
+      - run: python3 -m design.p104_ram_compare > ram-primitive-report.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ram-primitive-report
+          path: ram-primitive-report.json
