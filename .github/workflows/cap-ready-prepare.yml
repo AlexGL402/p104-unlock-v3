@@ -1,0 +1,18 @@
+name: Cap-ready preparation policy (fixtures only)
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  preparation:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 -m unittest discover -s tests -p 'test_cap_ready_prepare.py' -v
+      - run: python3 -m design.p104_cap_ready_build --directory work/prep-native
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cap-ready-preparation-native-audit
+          path: work/prep-native/p104_cap_ready.json
