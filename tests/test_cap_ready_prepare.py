@@ -92,6 +92,55 @@ class CapReadyPreparationTests(unittest.TestCase):
         self.assertGreater(result['safe_root_rows_suppressed'], 0)
         self.assertIn('DWORD PTR [rdi],esi', ' '.join(self.manifest['assembly']['ram_store32']))
 
+    def test_exact_t5600_zero_tls_profile_prepares_to_two(self):
+        self.change(self.fixture.gpu/'config', 0x90, 0)
+        writes = []
+        original = os.pwrite
+        def track(fd, data, offset):
+            writes.append((offset, int.from_bytes(data, 'little')))
+            return original(fd, data, offset)
+        with patch.object(prep.os, 'pwrite', side_effect=track):
+            result = self.apply()
+        self.assertEqual(result['result'], 'PASS')
+        self.assertEqual(self.calls, [0, 1, 2, 3])
+        self.assertEqual(writes, [(0x90, 0x0002), (0xc0, 0x0042)])
+        self.assertTrue(any(r['event'] == 'initial_tls_profile' and
+                            r['name'] == 't5600_gpu0000_root0043' for r in self.rows))
+        self.assertEqual(result['tls_verified'], ['gpu', 'root'])
+
+    def test_gpu_zero_only_accepts_exact_root_word_0043(self):
+        self.change(self.fixture.gpu/'config', 0x90, 0)
+        for word in (0, 0x0003, 0x0041, 0x0042, 0x0083, 0x1043):
+            with self.subTest(root_ctl2=word):
+                self.change(self.fixture.root/'config', 0xc0, word)
+                result = self.apply()
+                self.assertEqual(result['result'], 'FAIL')
+                self.assertIn('unexpected initial TLS', result['reason'])
+                self.assertEqual(result['mmio_attempts'], [])
+                self.assertEqual(result['tls_attempts'], [])
+
+    def test_zero_low_nibble_with_extra_gpu_bits_is_not_factory_exception(self):
+        for word in (0x0020, 0x0040, 0x0400, 0x0800):
+            with self.subTest(gpu_ctl2=word):
+                self.change(self.fixture.gpu/'config', 0x90, word)
+                result = self.apply()
+                self.assertEqual(result['result'], 'FAIL')
+                self.assertEqual(result['mmio_attempts'], [])
+                self.assertEqual(result['tls_attempts'], [])
+
+    def test_zero_profile_does_not_bypass_command_or_capability_guard(self):
+        self.change(self.fixture.gpu/'config', 0x90, 0)
+        self.change(self.fixture.gpu/'config', 4, 6)
+        result = self.apply()
+        self.assertEqual(result['result'], 'FAIL')
+        self.assertEqual(result['mmio_attempts'], [])
+        self.change(self.fixture.gpu/'config', 4, 2)
+        self.change(self.fixture.gpu/'config', 0x8c, 6, 4)
+        result = self.apply()
+        self.assertEqual(result['result'], 'FAIL')
+        self.assertEqual(result['mmio_attempts'], [])
+        self.assertEqual(result['tls_attempts'], [])
+
     def test_dry_run_has_no_writer_or_config_write(self):
         before = self.fixture.bar.read_bytes()
         with patch.object(self.lib, 'prep_map', side_effect=AssertionError('no RW mapping')), \

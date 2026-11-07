@@ -34,8 +34,10 @@ GPU0 unbound from any driver, D0/runtime active, MSE=1/BME=0; Root D0/MSE=1,
 Training=0/DLLLA=1. Both ends stay Gen1 x4 throughout. AER and Device Status
 errors/Transactions Pending must be zero; no status is cleared. Root capability
 must match Gen3 x16; initial GPU CAP/CAP2 `00453C41/2`. Initial TLS may be GPU
-1/2, Root 1/2/3, compliance controls off; exact CTL/CTL2 snapshots are then
-checked for drift. Every operation has fresh guards, one separate readback and
+1/2, Root 1/2/3, compliance controls off. One additional observed T5600 profile
+is admitted: **full GPU CTL2=0000 / full Root CTL2=0043**, only after all the same
+factory BAR0/CAP/link/COMMAND guards. No other TLS=0 profile is allowed.
+Exact CTL/CTL2 snapshots are then checked for drift. Every operation has fresh guards, one separate readback and
 post-step full register/CAP/CAP2/STA checks. Safe routine Root rows are counted
 rather than streamed; unsafe Root rows and per-access brackets are retained.
 
@@ -80,3 +82,19 @@ further endpoint access; fatal signals/timeouts are recorded by the parent.
 Read-only guards cannot eliminate asynchronous link-loss/binding races. Override,
 capability and TLS writes still carry link-loss risk. Operator cold recovery,
 if needed, interrupts GPU1 as well; no recovery is performed by this tool.
+
+## Narrow TLS=0 correction
+
+TLS=0 is not a speed encoding equivalent to TLS=1. PCIe Base 4.0 draft v0.3,
+Table 7-28, p.654 ([specification mirror](https://raw.githubusercontent.com/osdev-jp/spec/refs/heads/main/PCI_Express_Base_4.0_Rev0.3_February19-2014.pdf)),
+permits a 2.5-GT/s-only component to hardwire this field to zero; the same rule
+and upstream-port distinction appear in the vendor
+[AMD register reference, Target Link Speed field](https://docs.amd.com/r/en-US/am052-versal-aie-prime-pcm-gen2-register-reference/VF4_PF5_PCIE_CAP_VF_LINK_CONTROL2_LINK_STATUS2_REG-MMI_PCIE_CTRL_USP-Register?contentId=EPTA~LkElQGm2YDfY2R5lQ).
+This supports admitting a **read** of zero in our Gen1-declaring baseline; it
+does not prove GP104 hardwiring or authorize writing zero/unsupported speeds.
+The current hardware report identifies the exact factory pair. Older T5600
+[evidence lines 1,8–13](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/cap-retrain-result/gpu0-stage2-cap-retrain-1793930796885371367.jsonl#L1-L13)
+already records GPU 0000 / Root 0043, then successful 0000->0002 and
+0043->0042 readbacks after capability preparation. Those older TLS observations
+precede that experiment's retrain; this tool does not reproduce its retrain.
+Final TLS=2 requirements, native store and preparation order are unchanged.

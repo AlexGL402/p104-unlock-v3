@@ -139,10 +139,17 @@ class Preparation(ro.Adapter):
     def admit(self):
         self.open()  # Reuse read-only identity/topology/BAR/D0/COMMAND/mapping guards.
         links = self.snapshot('factory_admission')
-        if links['gpu']['ctl2'] & 15 not in (1, 2) or links['root']['ctl2'] & 15 not in (1, 2, 3):
+        # Observed T5600 Gen1-only factory declaration; NOT a general TLS=0 allowance.
+        known_zero_profile = links['gpu']['ctl2'] == 0x0000 and links['root']['ctl2'] == 0x0043
+        regular_profile = (links['gpu']['ctl2'] & 15 in (1, 2) and
+                           links['root']['ctl2'] & 15 in (1, 2, 3))
+        if not (regular_profile or known_zero_profile):
             raise ro.Stop('unexpected initial TLS')
         if any(v['ctl2'] & 0x810 for v in links.values()):
             raise ro.Stop('compliance controls must be off')
+        self.record('initial_tls_profile', name=('t5600_gpu0000_root0043' if known_zero_profile
+                                                else 'regular_nonzero_tls'),
+                    gpu_ctl2=links['gpu']['ctl2'], root_ctl2=links['root']['ctl2'])
         self.initial_links = links
         self.tls_expected = {name: v['ctl2'] for name, v in links.items()}
         self.record('plan', mmio_steps=STEPS, tls_order=[ro.GPU, ro.ROOT], retrain=False,
