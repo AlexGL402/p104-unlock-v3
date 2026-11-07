@@ -1,0 +1,225 @@
+{
+  "scope": "offline source/binary/RAM reference audit; not the crash runtime",
+  "hardware_access": false,
+  "hardware_allowed": false,
+  "ubuntu_package_version": "3.12.3-1ubuntu0.17",
+  "ubuntu_python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+  "ubuntu_files": [
+    {
+      "name": "python3.12-minimal_3.12.3-1ubuntu0.17_amd64.deb",
+      "sha256": "d452689b9660845345a4c3e05e4ad82c082d5474e04031b7aa47f1a6d5610a6e"
+    },
+    {
+      "name": "libpython3.12-stdlib_3.12.3-1ubuntu0.17_amd64.deb",
+      "sha256": "45d3f530ba1f9d6e879ad46b92046fabab13fe50a82450e4f65557a3bbad1489"
+    },
+    {
+      "name": "libpython3.12-minimal_3.12.3-1ubuntu0.17_amd64.deb",
+      "sha256": "d646ad7112b5adec21ba0e1af015f04ae8ca7f5efdc619622547dd6673c4c14b"
+    },
+    {
+      "name": "python3.12_3.12.3-1ubuntu0.17.dsc",
+      "sha256": "941700b999737d869b80c3b5a0adc0996a0fd760b982e18551bd2104da779384"
+    },
+    {
+      "name": "python3.12_3.12.3.orig.tar.xz",
+      "sha256": "56bfef1fdfc1221ce6720e43a661e3eb41785dd914ce99698d8c7896af4bdaa1"
+    },
+    {
+      "name": "python3.12_3.12.3-1ubuntu0.17.debian.tar.xz",
+      "sha256": "17b15629cb10825924cf7b85055255080ec773133ae0f8b8ce5ea2eec90dd200"
+    }
+  ],
+  "ubuntu_executable_sha256": "e50d468e8b0adfb05733f5b87b3cff34829c4a8c1aea50c865aa8bdfe4bb150f",
+  "ubuntu_ctypes_sha256": "aad3e24f186e6c0a1c7efa8f16004f951f527db86f6451d30118657384a456c1",
+  "ubuntu_disassembly": {
+    "struct_pack_into_entry": "0x62b180",
+    "zero_memset_call": "0x62b239",
+    "uint_packer_entry": "0x629c90",
+    "uint_destination_store": "0x629cf8",
+    "ctypes_I_set_entry": "0x15890",
+    "ctypes_plain_uint_store": "0x158b8",
+    "names_reconstructed_from_tables": true,
+    "actual_memset_store_width_and_count": "not established; libc dispatch dependent"
+  },
+  "native_reference": {
+    "compiler": "cc Debian GCC 14.2.0-19, -O2 -fno-lto -fno-ipa-cp",
+    "source_sha256": "e8ab8a5e9b6bcdd7f673766cdc969cce5402c637971a3550e4d03ccac5101992",
+    "binary_sha256": "bc496ec539e617437954e1b929e9bf0bf79a4f38779a466476076864674a93b6",
+    "instructions": {
+      "ram_store32": [
+        "mov    DWORD PTR [rdi],esi",
+        "ret"
+      ],
+      "ram_load32": [
+        "mov    eax,DWORD PTR [rdi]",
+        "ret"
+      ]
+    }
+  },
+  "ram_cases_ubuntu": [
+    {
+      "old": 537417728,
+      "target": 537155584,
+      "ram_only": true,
+      "hardware_allowed": false,
+      "pack_into": {
+        "conversion_snapshots": [
+          0
+        ],
+        "final": 537155584,
+        "ordinary_int_final": 537155584
+      },
+      "ctypes": {
+        "final": 537155584,
+        "hidden_stores_measured": false
+      },
+      "native": {
+        "final": 537155584,
+        "explicit_readback": true,
+        "bus_transactions_measured": false
+      },
+      "limitation": "Final RAM values do not certify ctypes/MMIO safety or command execution"
+    },
+    {
+      "old": 537417728,
+      "target": 537155585,
+      "ram_only": true,
+      "hardware_allowed": false,
+      "pack_into": {
+        "conversion_snapshots": [
+          0
+        ],
+        "final": 537155585,
+        "ordinary_int_final": 537155585
+      },
+      "ctypes": {
+        "final": 537155585,
+        "hidden_stores_measured": false
+      },
+      "native": {
+        "final": 537155585,
+        "explicit_readback": true,
+        "bus_transactions_measured": false
+      },
+      "limitation": "Final RAM values do not certify ctypes/MMIO safety or command execution"
+    },
+    {
+      "old": 537417728,
+      "target": 537417729,
+      "ram_only": true,
+      "hardware_allowed": false,
+      "pack_into": {
+        "conversion_snapshots": [
+          0
+        ],
+        "final": 537417729,
+        "ordinary_int_final": 537417729
+      },
+      "ctypes": {
+        "final": 537417729,
+        "hidden_stores_measured": false
+      },
+      "native": {
+        "final": 537417729,
+        "explicit_readback": true,
+        "bus_transactions_measured": false
+      },
+      "limitation": "Final RAM values do not certify ctypes/MMIO safety or command execution"
+    }
+  ],
+  "ram_cases_development": [
+    {
+      "old": 537417728,
+      "target": 537155584,
+      "ram_only": true,
+      "hardware_allowed": false,
+      "pack_into": {
+        "conversion_snapshots": [
+          0
+        ],
+        "final": 537155584,
+        "ordinary_int_final": 537155584
+      },
+      "ctypes": {
+        "final": 537155584,
+        "hidden_stores_measured": false
+      },
+      "native": {
+        "final": 537155584,
+        "explicit_readback": true,
+        "bus_transactions_measured": false
+      },
+      "limitation": "Final RAM values do not certify ctypes/MMIO safety or command execution"
+    },
+    {
+      "old": 537417728,
+      "target": 537155585,
+      "ram_only": true,
+      "hardware_allowed": false,
+      "pack_into": {
+        "conversion_snapshots": [
+          0
+        ],
+        "final": 537155585,
+        "ordinary_int_final": 537155585
+      },
+      "ctypes": {
+        "final": 537155585,
+        "hidden_stores_measured": false
+      },
+      "native": {
+        "final": 537155585,
+        "explicit_readback": true,
+        "bus_transactions_measured": false
+      },
+      "limitation": "Final RAM values do not certify ctypes/MMIO safety or command execution"
+    },
+    {
+      "old": 537417728,
+      "target": 537417729,
+      "ram_only": true,
+      "hardware_allowed": false,
+      "pack_into": {
+        "conversion_snapshots": [
+          0
+        ],
+        "final": 537417729,
+        "ordinary_int_final": 537417729
+      },
+      "ctypes": {
+        "final": 537417729,
+        "hidden_stores_measured": false
+      },
+      "native": {
+        "final": 537417729,
+        "explicit_readback": true,
+        "bus_transactions_measured": false
+      },
+      "limitation": "Final RAM values do not certify ctypes/MMIO safety or command execution"
+    }
+  ],
+  "legacy_sources": [
+    {
+      "commit": "16f39946d95afe4c63e92404cb0e8bd89c39ac5e",
+      "sha256": "c5f61e73c47221ca0ccbf1c9a8e1504d9a42dbe3c8ef5f66a7c5008e10688f9d",
+      "pack_into_line": 101
+    },
+    {
+      "commit": "e1bff32c92304a3b6fc1029e4d9c99d459ea8741",
+      "sha256": "f5cca64aed395e1b53b0608f7851d6e7d1557b9412d4a3a9d37a417a63f0269b",
+      "pack_into_line": 98
+    },
+    {
+      "commit": "c2f4a75bc34cbe8d0e6c3a9d3eeec920596a5861",
+      "sha256": "34208c695b1a4c89d126950aa0219724f94f93ca7452aaeb09dcdd6b42372357",
+      "pack_into_line": 98
+    }
+  ],
+  "missing": [
+    "crash script hash/argv",
+    "crash runtime package/build hash",
+    "crash mapping attributes",
+    "actual PCIe trace/command ACK"
+  ]
+}
