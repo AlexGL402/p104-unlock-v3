@@ -4,6 +4,14 @@
 
 [中文](README.zh-CN.md) | **English**
 
+
+**Linux / Dell T5600:** the primary entry point is now
+[`p104_apply_live_group.py`](docs/linux-apply-live-group.md), a single invocation
+of the Windows `ApplyLiveGroup()` MMIO recipe with native DWORD stores and Linux
+safety guards. It does not include the outer Windows TLS/retrain/reset/watchdog
+pipeline and is not yet hardware-validated as a Linux Gen2 unlock. Earlier
+staged tools remain historical evidence; do not chain them into this runner.
+
 > Windows tool for the NVIDIA **P104-100** (GP104 mining card, `10DE:1B87`):
 > factory **Gen1 x4 (≈0.78 GB/s)** → **Gen2 x4 (≈1.55/1.69 GB/s measured)**,
 > plus the **x16 width declaration** (`LnkCap maxwidth = 16`), kept alive by a resident watchdog.

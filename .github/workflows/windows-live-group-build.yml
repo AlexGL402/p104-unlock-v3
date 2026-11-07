@@ -1,0 +1,18 @@
+name: Windows ApplyLiveGroup port (build audit only)
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  build-audit:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 -m py_compile p104_apply_live_group.py design/p104_live_group_build.py
+      - run: python3 -m design.p104_live_group_build --directory work/live-native
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-live-group-native-audit
+          path: work/live-native/p104_live_group.json
