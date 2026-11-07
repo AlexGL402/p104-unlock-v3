@@ -256,5 +256,5 @@ gates, source parsing без исполнения, private exclusive output, а�
 fingerprints и Unknown при отсутствии runtime attribution. Дополнительный
 RAM контроль не импортирует hardware tools и не обращается к устройствам.
 CI запускает fixtures/RAM tests, **не collector против истории CI host**.
-Локально прошли все **188 tests**, включая **25 новых**. Дополнительный
+Локально прошли все **189 tests**, включая **26 новых**. Дополнительный
 plain-int RAM control отдельно прошёл на Ubuntu reference interpreter.

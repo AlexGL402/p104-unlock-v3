@@ -243,12 +243,14 @@ def git_facts(repo, runner=run_bounded):
 
     lines = invoke('history', ['log', '--no-show-signature', '--no-notes', '--all', '--max-count=48', '--format=%H%x09%ct%x09%at',
                                '--', 'p104_gen2_linux.py'])
+    history_limit_reached = len(lines) >= 48
     for line in lines[:48]:
         p = line.split('\t')
         if len(p) == 3 and HEX.fullmatch(p[0]) and all(x.isdigit() for x in p[1:]):
             result['history'].append(dict(commit=p[0], committer_epoch=int(p[1]), author_epoch=int(p[2]),
                                            execution_proven=False))
     lines = invoke('reflog', ['reflog', '--all', '--max-count=128', '--date=raw', '--format=%H%x09%gD'])
+    reflog_limit_reached = len(lines) >= LIMIT
     for line in lines[:LIMIT]:
         m = re.fullmatch(r'([0-9a-f]{40,64})\t[^\t]*@\{(\d+) ([+-]\d{4})\}', line)
         if m and HEX.fullmatch(m[1]):
@@ -265,6 +267,7 @@ def git_facts(repo, runner=run_bounded):
         else:
             result['objects'].append(dict(commit=commit, status=lines['status']))
     result['coverage']['limits'] = dict(history=48, reflog=128, objects=51,
+        history_limit_reached=history_limit_reached, reflog_limit_reached=reflog_limit_reached,
         note='Missing/shallow/expired objects are unknown; no fetch is permitted; timestamps are not execution evidence')
     return result
 
@@ -495,7 +498,8 @@ def journal_facts(since, until, runner=run_bounded):
                                   displayed_timezone='UTC (collector subprocess environment)'))
     return dict(events=output, boots=boot_rows, query_status=r['status'], boot_status=boots['status'],
                 scope='accessible journal only; missing permissions/rotation/volatile boots may hide events',
-                complete_visibility_proven=False, event_limit=LIMIT, boot_limit=64)
+                complete_visibility_proven=False, event_limit=LIMIT, boot_limit=64,
+                event_limit_reached=len(output) >= LIMIT, boot_limit_may_apply=len(boot_rows) >= 64)
 
 
 def runtime_facts(runner=run_bounded):
@@ -539,7 +543,12 @@ def discover(roots):
             continue
         for directory, dirs, files in os.walk(root, followlinks=False,
                                              onerror=lambda exc: gaps.append('directory_unavailable')):
+            visited += 1  # bound empty directories as well as files
+            if visited >= 8192:
+                return list(dict.fromkeys(sources)), list(dict.fromkeys(logs)), list(dict.fromkeys(gaps + ['scan_limit']))
             depth = len(Path(directory).relative_to(root).parts)
+            if len(dirs) > 64 or len(files) > 2048:
+                gaps.append('per_directory_listing_limit_may_apply')
             dirs[:] = [d for d in sorted(dirs) if depth < 5 and d not in SKIP_DIRS and not d.startswith('.')
                        and not (Path(directory)/d).is_symlink()][:64]
             for name in sorted(files)[:2048]:
@@ -552,8 +561,10 @@ def discover(roots):
                     if len(logs) < 48:
                         logs.append(p)
                 if visited >= 8192:
-                    return list(dict.fromkeys(sources)), list(dict.fromkeys(logs)), gaps + ['scan_limit']
-    return list(dict.fromkeys(sources)), list(dict.fromkeys(logs)), gaps
+                    return list(dict.fromkeys(sources)), list(dict.fromkeys(logs)), list(dict.fromkeys(gaps + ['scan_limit']))
+    if len(sources) >= 48 or len(logs) >= 48:
+        gaps.append('candidate_limit_may_apply')
+    return list(dict.fromkeys(sources)), list(dict.fromkeys(logs)), list(dict.fromkeys(gaps))
 
 
 def collect(repo, roots, home, since, until, runner=run_bounded, runtime=None):
@@ -590,12 +601,15 @@ def collect(repo, roots, home, since, until, runner=run_bounded, runtime=None):
     for name in ('.bash_history', '.zsh_history'):
         meta, data = safe_file(home/name, 8*2**20)
         # Do not persist whole-history hash/stat/content or arbitrary command text.
-        report['history'].append(dict(kind=name, status=meta['status'], matches=history_facts(data) if data is not None else [],
+        matches = history_facts(data) if data is not None else []
+        report['history'].append(dict(kind=name, status=meta['status'], matches=matches,
+                                      limits_may_apply=len(matches) >= LIMIT or data is not None and data.count(b'\n') >= 50000,
                                       coverage='saved history only; current session/disabled history may be absent'))
     for path in logs:
         meta, data = safe_file(path, 2*2**20)
+        facts = log_facts(data) if data is not None else []
         report['logs'].append(dict(meta, location=hint(path, repo, home),
-                                  facts=log_facts(data) if data is not None else []))
+                                  facts=facts, limits_may_apply=len(facts) >= LIMIT or data is not None and data.count(b'\n') >= 10000))
     report['assessment'] = dict(executed_crash_writer='Unknown', actual_pcie_store_sequence='Unknown',
         decision='NO-GO', next_hardware_test_authorized=False,
         note='A matching current file or command-history entry does not prove the bytes executed at the crash',

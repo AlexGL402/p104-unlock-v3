@@ -191,6 +191,14 @@ class Fixtures(unittest.TestCase):
         p = self.repo/SECRET/('gpu0-'+SECRET+'.log')
         self.assertNotIn(SECRET, f.hint(p, self.repo, self.home))
 
+    def test_scan_budget_includes_empty_directories(self):
+        directories = ((str(self.repo), [], []) for _ in range(9000))
+        with patch.object(f.os, 'walk', return_value=directories):
+            sources, logs, gaps = f.discover([self.repo])
+        self.assertEqual(sources, [])
+        self.assertEqual(logs, [])
+        self.assertIn('scan_limit', gaps)
+
     def test_collect_only_fixture_data_never_authorizes_hardware(self):
         (self.repo/'p104_gen2_linux.py').write_text('raise SystemExit("never execute")')
         (self.home/'.bash_history').write_text('python3 p104_gen2_linux.py --apply --secret '+SECRET)
