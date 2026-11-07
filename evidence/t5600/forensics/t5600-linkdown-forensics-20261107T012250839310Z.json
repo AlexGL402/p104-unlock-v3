@@ -1,0 +1,3104 @@
+{
+  "schema": 1,
+  "collected_utc": "2026-11-07T01:22:46.717854+00:00",
+  "hardware_access": false,
+  "gpu1_access": false,
+  "hardware_execution_allowed": false,
+  "root_escalation": false,
+  "window": {
+    "since": "2026-11-05 19:00:00 UTC",
+    "until": "2026-11-06 03:00:00 UTC"
+  },
+  "runtime": {
+    "version": "3.12.3",
+    "implementation": "cpython",
+    "artifacts": {
+      "interpreter": {
+        "status": "ok",
+        "size": 8020928,
+        "sha256": "e50d468e8b0adfb05733f5b87b3cff34829c4a8c1aea50c865aa8bdfe4bb150f",
+        "mtime_ns": 1788171506000000000,
+        "ctime_ns": 1790281776963596335,
+        "timestamps_prove_execution": false,
+        "path": "/usr/bin/python3.12",
+        "builtin": false
+      },
+      "_struct": {
+        "status": "ok",
+        "size": 8020928,
+        "sha256": "e50d468e8b0adfb05733f5b87b3cff34829c4a8c1aea50c865aa8bdfe4bb150f",
+        "mtime_ns": 1788171506000000000,
+        "ctime_ns": 1790281776963596335,
+        "timestamps_prove_execution": false,
+        "path": "/usr/bin/python3.12",
+        "builtin": true
+      }
+    },
+    "packages": [
+      {
+        "package": "libpython3.12-minimal:amd64",
+        "version": "3.12.3-1ubuntu0.17"
+      },
+      {
+        "package": "libpython3.12-stdlib:amd64",
+        "version": "3.12.3-1ubuntu0.17"
+      },
+      {
+        "package": "python3.12-minimal",
+        "version": "3.12.3-1ubuntu0.17"
+      }
+    ],
+    "package_status": "ok",
+    "semantics": "current on-disk artifacts, not crash runtime or proof of loaded binary identity"
+  },
+  "sources": [
+    {
+      "status": "ok",
+      "size": 35148,
+      "sha256": "10f3003dc4f3becfff80ff4751e3286f7f4e07b1be1aa5903d6e84ce3140a7d4",
+      "mtime_ns": 1793930726764800604,
+      "ctime_ns": 1793930726764800604,
+      "timestamps_prove_execution": false,
+      "location": "$REPO/p104_gen2_linux.py",
+      "absolute_path_sha256": "da604202ba60abcaf0a8d57a7ddfb4391c97de42f548b3c0467656ccbffd3889",
+      "archive_match": null,
+      "source": {
+        "primitives": [
+          {
+            "kind": "ctypes_uint32_assignment",
+            "line": 118
+          }
+        ],
+        "resource_open": [
+          {
+            "line": 98,
+            "api": "os.open",
+            "resource": "resource0",
+            "flags_mentioned": [
+              "os.O_RDONLY",
+              "os.O_RDWR",
+              "os.O_SYNC"
+            ],
+            "runtime_flags_proven": false
+          }
+        ],
+        "mapping_lines": [],
+        "mapping": [],
+        "observed_execution": false,
+        "parse_status": "ok",
+        "analysis": "syntactic only; aliases/dynamic dataflow may be incomplete"
+      }
+    },
+    {
+      "status": "ok",
+      "size": 7827,
+      "sha256": "c5f61e73c47221ca0ccbf1c9a8e1504d9a42dbe3c8ef5f66a7c5008e10688f9d",
+      "mtime_ns": 1793925128182704705,
+      "ctime_ns": 1793927888618710284,
+      "timestamps_prove_execution": false,
+      "location": "$REPO/p104_gen2_linux.py.old",
+      "absolute_path_sha256": "7c6067a60e6055e93e4e1ca616ac76c2c250454bb0064ed989d700d32495b2a8",
+      "archive_match": "16f39946d95afe4c63e92404cb0e8bd89c39ac5e",
+      "source": {
+        "primitives": [
+          {
+            "kind": "struct.pack_into",
+            "line": 101,
+            "format": "<I",
+            "syntactic_mapping_argument": true
+          }
+        ],
+        "resource_open": [
+          {
+            "line": 87,
+            "api": "os.open",
+            "resource": "resource0",
+            "flags_mentioned": [
+              "os.O_RDONLY",
+              "os.O_RDWR",
+              "os.O_SYNC"
+            ],
+            "runtime_flags_proven": false
+          }
+        ],
+        "mapping_lines": [
+          89
+        ],
+        "mapping": [
+          {
+            "line": 89,
+            "flags_mentioned": [
+              "mmap.MAP_SHARED",
+              "mmap.PROT_READ",
+              "mmap.PROT_WRITE"
+            ],
+            "runtime_attributes_proven": false
+          }
+        ],
+        "observed_execution": false,
+        "parse_status": "ok",
+        "analysis": "syntactic only; aliases/dynamic dataflow may be incomplete"
+      }
+    }
+  ],
+  "history": [
+    {
+      "kind": ".bash_history",
+      "status": "ok",
+      "matches": [
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1035,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1175,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1176,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1177,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1179,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1181,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1186,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1188,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1192,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1193,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1195,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1196,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1198,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1201,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1205,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1206,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1207,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "related_command_syntax",
+          "tool": "nvidia-smi",
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1208,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1261,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1381,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1387,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1388,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1389,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1394,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "git_command_syntax",
+          "operation": "clone",
+          "known_commits": [],
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1400,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1402,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1405,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1408,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1409,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1433,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1451,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1477,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1478,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1489,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1497,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1506,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1532,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "related_command_syntax",
+          "tool": "lspci",
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1563,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "related_command_syntax",
+          "tool": "lspci",
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1566,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "related_command_syntax",
+          "tool": "setpci",
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1569,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "related_command_syntax",
+          "tool": "setpci",
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1570,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "related_command_syntax",
+          "tool": "setpci",
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1571,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "related_command_syntax",
+          "tool": "setpci",
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1572,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1573,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1582,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "git_command_syntax",
+          "operation": "other",
+          "known_commits": [],
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1583,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "git_command_syntax",
+          "operation": "show",
+          "known_commits": [],
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1585,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1586,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "writer_invocation_syntax",
+          "interpreter": "python3",
+          "interpreter_token_sha256": "c1cc69e61c0f1c7ade8df0f2994e582e7c1f2c57d1ec192a0baf9f96b7739d9d",
+          "interpreter_token_absolute": false,
+          "flags": [
+            "--dry-run"
+          ],
+          "script_token_sha256": "612f0a821bd5b7d2721f01b6e252b7e685c491ac6f60bcab22a53071008b8f0f",
+          "script_token_absolute": false,
+          "confirm_bdf_is_gpu0": false,
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1587,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1588,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "writer_invocation_syntax",
+          "interpreter": "python3",
+          "interpreter_token_sha256": "c1cc69e61c0f1c7ade8df0f2994e582e7c1f2c57d1ec192a0baf9f96b7739d9d",
+          "interpreter_token_absolute": false,
+          "flags": [
+            "--probe"
+          ],
+          "script_token_sha256": "612f0a821bd5b7d2721f01b6e252b7e685c491ac6f60bcab22a53071008b8f0f",
+          "script_token_absolute": false,
+          "confirm_bdf_is_gpu0": false,
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1589,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1591,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "git_command_syntax",
+          "operation": "show",
+          "known_commits": [],
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1593,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1594,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "writer_invocation_syntax",
+          "interpreter": "python3",
+          "interpreter_token_sha256": "c1cc69e61c0f1c7ade8df0f2994e582e7c1f2c57d1ec192a0baf9f96b7739d9d",
+          "interpreter_token_absolute": false,
+          "flags": [
+            "--dry-run"
+          ],
+          "script_token_sha256": "612f0a821bd5b7d2721f01b6e252b7e685c491ac6f60bcab22a53071008b8f0f",
+          "script_token_absolute": false,
+          "confirm_bdf_is_gpu0": false,
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1595,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1596,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "git_command_syntax",
+          "operation": "show",
+          "known_commits": [],
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1598,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1599,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1601,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "writer_invocation_syntax",
+          "interpreter": "python3",
+          "interpreter_token_sha256": "c1cc69e61c0f1c7ade8df0f2994e582e7c1f2c57d1ec192a0baf9f96b7739d9d",
+          "interpreter_token_absolute": false,
+          "flags": [
+            "--apply",
+            "--confirm-bdf",
+            "--confirm-risk"
+          ],
+          "script_token_sha256": "612f0a821bd5b7d2721f01b6e252b7e685c491ac6f60bcab22a53071008b8f0f",
+          "script_token_absolute": false,
+          "confirm_bdf_is_gpu0": true,
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1602,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "related_command_syntax",
+          "tool": "lspci",
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1607,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1610,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1612,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1616,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "writer_invocation_syntax",
+          "interpreter": "python3",
+          "interpreter_token_sha256": "c1cc69e61c0f1c7ade8df0f2994e582e7c1f2c57d1ec192a0baf9f96b7739d9d",
+          "interpreter_token_absolute": false,
+          "flags": [
+            "--apply",
+            "--confirm-bdf",
+            "--mode"
+          ],
+          "script_token_sha256": "da604202ba60abcaf0a8d57a7ddfb4391c97de42f548b3c0467656ccbffd3889",
+          "script_token_absolute": true,
+          "confirm_bdf_is_gpu0": true,
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1635,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "related_command_syntax",
+          "tool": "lspci",
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1645,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "related_command_syntax",
+          "tool": "lspci",
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1648,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "related_command_syntax",
+          "tool": "lspci",
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1651,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1653,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "related_command_syntax",
+          "tool": "lspci",
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1654,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "related_command_syntax",
+          "tool": "lspci",
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1657,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "related_command_syntax",
+          "tool": "lspci",
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1660,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1665,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1667,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "related_command_syntax",
+          "tool": "lspci",
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1673,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "related_command_syntax",
+          "tool": "journalctl",
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1676,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "related_command_syntax",
+          "tool": "lspci",
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1677,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "related_command_syntax",
+          "tool": "journalctl",
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1687,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "related_command_syntax",
+          "tool": "lspci",
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1706,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "related_command_syntax",
+          "tool": "lspci",
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1734,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1756,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "related_command_syntax",
+          "tool": "lspci",
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1786,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "related_command_syntax",
+          "tool": "lspci",
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1790,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1807,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1848,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1855,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "related_command_syntax",
+          "tool": "lspci",
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1878,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1884,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1886,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "git_command_syntax",
+          "operation": "show",
+          "known_commits": [],
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1887,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1888,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "writer_invocation_syntax",
+          "interpreter": "python3",
+          "interpreter_token_sha256": "c1cc69e61c0f1c7ade8df0f2994e582e7c1f2c57d1ec192a0baf9f96b7739d9d",
+          "interpreter_token_absolute": false,
+          "flags": [
+            "--mode"
+          ],
+          "script_token_sha256": "612f0a821bd5b7d2721f01b6e252b7e685c491ac6f60bcab22a53071008b8f0f",
+          "script_token_absolute": false,
+          "confirm_bdf_is_gpu0": false,
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1889,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1890,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1894,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "writer_invocation_syntax",
+          "interpreter": "python3",
+          "interpreter_token_sha256": "c1cc69e61c0f1c7ade8df0f2994e582e7c1f2c57d1ec192a0baf9f96b7739d9d",
+          "interpreter_token_absolute": false,
+          "flags": [
+            "--apply",
+            "--confirm-bdf",
+            "--mode"
+          ],
+          "script_token_sha256": "da604202ba60abcaf0a8d57a7ddfb4391c97de42f548b3c0467656ccbffd3889",
+          "script_token_absolute": true,
+          "confirm_bdf_is_gpu0": true,
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1913,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1922,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "related_command_syntax",
+          "tool": "lspci",
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1924,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "related_command_syntax",
+          "tool": "lspci",
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1926,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "related_command_syntax",
+          "tool": "lspci",
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1928,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1930,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1932,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "writer_invocation_syntax",
+          "interpreter": "python3",
+          "interpreter_token_sha256": "c1cc69e61c0f1c7ade8df0f2994e582e7c1f2c57d1ec192a0baf9f96b7739d9d",
+          "interpreter_token_absolute": false,
+          "flags": [
+            "--mode"
+          ],
+          "script_token_sha256": "612f0a821bd5b7d2721f01b6e252b7e685c491ac6f60bcab22a53071008b8f0f",
+          "script_token_absolute": false,
+          "confirm_bdf_is_gpu0": false,
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1933,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1934,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1936,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "git_command_syntax",
+          "operation": "show",
+          "known_commits": [],
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1938,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1939,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1940,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1941,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "git_command_syntax",
+          "operation": "show",
+          "known_commits": [],
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1943,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1944,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "writer_invocation_syntax",
+          "interpreter": "python3",
+          "interpreter_token_sha256": "c1cc69e61c0f1c7ade8df0f2994e582e7c1f2c57d1ec192a0baf9f96b7739d9d",
+          "interpreter_token_absolute": false,
+          "flags": [],
+          "script_token_sha256": "612f0a821bd5b7d2721f01b6e252b7e685c491ac6f60bcab22a53071008b8f0f",
+          "script_token_absolute": false,
+          "confirm_bdf_is_gpu0": false,
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1945,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1946,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1950,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "writer_invocation_syntax",
+          "interpreter": "python3",
+          "interpreter_token_sha256": "c1cc69e61c0f1c7ade8df0f2994e582e7c1f2c57d1ec192a0baf9f96b7739d9d",
+          "interpreter_token_absolute": false,
+          "flags": [
+            "--apply",
+            "--confirm-bdf",
+            "--mode"
+          ],
+          "script_token_sha256": "da604202ba60abcaf0a8d57a7ddfb4391c97de42f548b3c0467656ccbffd3889",
+          "script_token_absolute": true,
+          "confirm_bdf_is_gpu0": true,
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1969,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1976,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "writer_invocation_syntax",
+          "interpreter": "python3",
+          "interpreter_token_sha256": "c1cc69e61c0f1c7ade8df0f2994e582e7c1f2c57d1ec192a0baf9f96b7739d9d",
+          "interpreter_token_absolute": false,
+          "flags": [
+            "--dry-run",
+            "--mode"
+          ],
+          "script_token_sha256": "612f0a821bd5b7d2721f01b6e252b7e685c491ac6f60bcab22a53071008b8f0f",
+          "script_token_absolute": false,
+          "confirm_bdf_is_gpu0": false,
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1977,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1978,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "writer_invocation_syntax",
+          "interpreter": "python3",
+          "interpreter_token_sha256": "c1cc69e61c0f1c7ade8df0f2994e582e7c1f2c57d1ec192a0baf9f96b7739d9d",
+          "interpreter_token_absolute": false,
+          "flags": [
+            "--apply",
+            "--confirm-bdf",
+            "--mode"
+          ],
+          "script_token_sha256": "612f0a821bd5b7d2721f01b6e252b7e685c491ac6f60bcab22a53071008b8f0f",
+          "script_token_absolute": false,
+          "confirm_bdf_is_gpu0": true,
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1979,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "related_command_syntax",
+          "tool": "lspci",
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1981,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "related_command_syntax",
+          "tool": "lspci",
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1983,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1984,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1985,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "git_command_syntax",
+          "operation": "show",
+          "known_commits": [],
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1987,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1988,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "writer_invocation_syntax",
+          "interpreter": "python3",
+          "interpreter_token_sha256": "c1cc69e61c0f1c7ade8df0f2994e582e7c1f2c57d1ec192a0baf9f96b7739d9d",
+          "interpreter_token_absolute": false,
+          "flags": [],
+          "script_token_sha256": "612f0a821bd5b7d2721f01b6e252b7e685c491ac6f60bcab22a53071008b8f0f",
+          "script_token_absolute": false,
+          "confirm_bdf_is_gpu0": false,
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1989,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1990,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "writer_invocation_syntax",
+          "interpreter": "python3",
+          "interpreter_token_sha256": "c1cc69e61c0f1c7ade8df0f2994e582e7c1f2c57d1ec192a0baf9f96b7739d9d",
+          "interpreter_token_absolute": false,
+          "flags": [
+            "--dry-run",
+            "--mode"
+          ],
+          "script_token_sha256": "612f0a821bd5b7d2721f01b6e252b7e685c491ac6f60bcab22a53071008b8f0f",
+          "script_token_absolute": false,
+          "confirm_bdf_is_gpu0": false,
+          "execution_proven": false,
+          "argv_values_redacted": true,
+          "line": 1991,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        },
+        {
+          "kind": "relevant_mention_only",
+          "execution_proven": false,
+          "line": 1992,
+          "saved_shell_timestamp": null,
+          "timestamp_is_execution_proof": false
+        }
+      ],
+      "limits_may_apply": true,
+      "coverage": "saved history only; current session/disabled history may be absent"
+    },
+    {
+      "kind": ".zsh_history",
+      "status": "unavailable",
+      "matches": [],
+      "limits_may_apply": false,
+      "coverage": "saved history only; current session/disabled history may be absent"
+    }
+  ],
+  "logs": [
+    {
+      "status": "ok",
+      "size": 3289,
+      "sha256": "10fc4fe46ded279ec6349ffb537681ba4ce1d5e4834b5c59e405449566e270b7",
+      "mtime_ns": 1793930735016089759,
+      "ctime_ns": 1793930735016089759,
+      "timestamps_prove_execution": false,
+      "location": "$REPO/work/cap-retrain-plan/gpu0-stage2-cap-retrain-1793930734987569069.jsonl",
+      "facts": [
+        {
+          "line": 1,
+          "event": "baseline",
+          "timestamp": "2026-11-06T02:05:34.989522+00:00",
+          "driver_bound": false,
+          "apply": false,
+          "mode": "stage2-cap-retrain",
+          "links": {
+            "0000:03:00.0": {
+              "cap": 4537410,
+              "sta": 4161,
+              "cap2": 6,
+              "ctl": 320,
+              "ctl2": 0
+            },
+            "0000:00:02.0": {
+              "cap": 8026371,
+              "sta": 12353,
+              "cap2": 14,
+              "ctl": 64,
+              "ctl2": 67
+            }
+          },
+          "reason_class": null,
+          "semantics": "script_report_not_bus_trace"
+        },
+        {
+          "line": 2,
+          "event": "cap_retrain_baseline",
+          "timestamp": "2026-11-06T02:05:34.998224+00:00",
+          "apply": false,
+          "mode": "stage2-cap-retrain",
+          "actual": {
+            "558892": 6,
+            "140316": 129,
+            "558108": 3233023232,
+            "574144": 109515187,
+            "574208": 67764416,
+            "573504": 537417728,
+            "573888": 131122,
+            "558608": 0
+          },
+          "reason_class": null,
+          "semantics": "script_report_not_bus_trace"
+        }
+      ],
+      "limits_may_apply": false
+    },
+    {
+      "status": "ok",
+      "size": 190569,
+      "sha256": "126227ca55fc48b260b5dcd11d7f6f51a83bff8265d5c22d5a447857ec5b7860",
+      "mtime_ns": 1793930801978214326,
+      "ctime_ns": 1793930801978214326,
+      "timestamps_prove_execution": false,
+      "location": "$REPO/work/cap-retrain-result/gpu0-stage2-cap-retrain-1793930796885371367.jsonl",
+      "facts": [
+        {
+          "line": 1,
+          "event": "baseline",
+          "timestamp": "2026-11-06T02:06:36.887310+00:00",
+          "driver_bound": false,
+          "apply": true,
+          "mode": "stage2-cap-retrain",
+          "links": {
+            "0000:03:00.0": {
+              "cap": 4537410,
+              "sta": 4161,
+              "cap2": 6,
+              "ctl": 320,
+              "ctl2": 0
+            },
+            "0000:00:02.0": {
+              "cap": 8026371,
+              "sta": 12353,
+              "cap2": 14,
+              "ctl": 64,
+              "ctl2": 67
+            }
+          },
+          "reason_class": null,
+          "semantics": "script_report_not_bus_trace"
+        },
+        {
+          "line": 2,
+          "event": "cap_retrain_baseline",
+          "timestamp": "2026-11-06T02:06:36.893864+00:00",
+          "apply": true,
+          "mode": "stage2-cap-retrain",
+          "actual": {
+            "558892": 6,
+            "140316": 129,
+            "558108": 3233023232,
+            "574144": 109515187,
+            "574208": 67764416,
+            "573504": 537417728,
+            "573888": 131122,
+            "558608": 0
+          },
+          "reason_class": null,
+          "semantics": "script_report_not_bus_trace"
+        },
+        {
+          "line": 8,
+          "event": "before_tls",
+          "timestamp": "2026-11-06T02:06:36.919495+00:00",
+          "offset": 168,
+          "old": 0,
+          "new": 2,
+          "apply": true,
+          "mode": "stage2-cap-retrain",
+          "reason_class": null,
+          "semantics": "intent_not_ack"
+        },
+        {
+          "line": 9,
+          "event": "after_tls",
+          "timestamp": "2026-11-06T02:06:36.923471+00:00",
+          "readback": 2,
+          "apply": true,
+          "mode": "stage2-cap-retrain",
+          "reason_class": null,
+          "semantics": "script_report_not_bus_trace"
+        },
+        {
+          "line": 12,
+          "event": "before_tls",
+          "timestamp": "2026-11-06T02:06:36.938186+00:00",
+          "offset": 192,
+          "old": 67,
+          "new": 66,
+          "apply": true,
+          "mode": "stage2-cap-retrain",
+          "reason_class": null,
+          "semantics": "intent_not_ack"
+        },
+        {
+          "line": 13,
+          "event": "after_tls",
+          "timestamp": "2026-11-06T02:06:36.942573+00:00",
+          "readback": 66,
+          "apply": true,
+          "mode": "stage2-cap-retrain",
+          "reason_class": null,
+          "semantics": "script_report_not_bus_trace"
+        },
+        {
+          "line": 16,
+          "event": "before_retrain",
+          "timestamp": "2026-11-06T02:06:36.958220+00:00",
+          "offset": 160,
+          "old": 64,
+          "new": 96,
+          "apply": true,
+          "mode": "stage2-cap-retrain",
+          "reason_class": null,
+          "semantics": "intent_not_ack"
+        },
+        {
+          "line": 173,
+          "event": "cap_retrain_result",
+          "timestamp": "2026-11-06T02:06:41.974907+00:00",
+          "apply": true,
+          "mode": "stage2-cap-retrain",
+          "links": {
+            "0000:03:00.0": {},
+            "0000:00:02.0": {}
+          },
+          "reason_class": null,
+          "semantics": "script_report_not_bus_trace"
+        },
+        {
+          "line": 174,
+          "event": "abort",
+          "timestamp": "2026-11-06T02:06:41.978653+00:00",
+          "apply": true,
+          "recovery_writes": false,
+          "mode": "stage2-cap-retrain",
+          "reason_class": "stop_no_retry",
+          "semantics": "script_report_not_bus_trace"
+        }
+      ],
+      "limits_may_apply": false
+    },
+    {
+      "status": "ok",
+      "size": 1129,
+      "sha256": "267ed4ae2b565d64d237cb7827bbeda8fff2adc5c041a3cc03feafe508ff8337",
+      "mtime_ns": 1793930069637814281,
+      "ctime_ns": 1793930069637814281,
+      "timestamps_prove_execution": false,
+      "location": "$REPO/work/cap-speed-plan/gpu0-stage1-cap-speed-1793930069627383795.jsonl",
+      "facts": [
+        {
+          "line": 1,
+          "event": "baseline",
+          "timestamp": "2026-11-06T01:54:29.629317+00:00",
+          "driver_bound": false,
+          "apply": false,
+          "mode": "stage1-cap-speed",
+          "links": {
+            "0000:03:00.0": {
+              "cap": 4537409,
+              "sta": 4161,
+              "cap2": 6,
+              "ctl": 320,
+              "ctl2": 0
+            },
+            "0000:00:02.0": {
+              "cap": 8026371,
+              "sta": 12353,
+              "cap2": 14,
+              "ctl": 64,
+              "ctl2": 67
+            }
+          },
+          "reason_class": null,
+          "semantics": "script_report_not_bus_trace"
+        },
+        {
+          "line": 2,
+          "event": "cap_speed_baseline",
+          "timestamp": "2026-11-06T01:54:29.636009+00:00",
+          "apply": false,
+          "mode": "stage1-cap-speed",
+          "actual": {
+            "558892": 6,
+            "140316": 129,
+            "558108": 3233023232,
+            "574144": 109515187,
+            "574208": 67764416,
+            "573504": 537417728,
+            "573888": 65586,
+            "558608": 0
+          },
+          "links": {
+            "0000:03:00.0": {
+              "cap": 4537409,
+              "sta": 4161,
+              "cap2": 6,
+              "ctl": 320,
+              "ctl2": 0
+            },
+            "0000:00:02.0": {
+              "cap": 8026371,
+              "sta": 12353,
+              "cap2": 14,
+              "ctl": 64,
+              "ctl2": 67
+            }
+          },
+          "reason_class": null,
+          "semantics": "script_report_not_bus_trace"
+        }
+      ],
+      "limits_may_apply": false
+    },
+    {
+      "status": "ok",
+      "size": 13725,
+      "sha256": "41e45622c441c1407e45d4ba4b5b9ac900b0d113ebbeaf86504a4c65d9f103e7",
+      "mtime_ns": 1793930110287987178,
+      "ctime_ns": 1793930110287987178,
+      "timestamps_prove_execution": false,
+      "location": "$REPO/work/cap-speed-result/gpu0-stage1-cap-speed-1793930108244936087.jsonl",
+      "facts": [
+        {
+          "line": 1,
+          "event": "baseline",
+          "timestamp": "2026-11-06T01:55:08.246863+00:00",
+          "driver_bound": false,
+          "apply": true,
+          "mode": "stage1-cap-speed",
+          "links": {
+            "0000:03:00.0": {
+              "cap": 4537409,
+              "sta": 4161,
+              "cap2": 6,
+              "ctl": 320,
+              "ctl2": 0
+            },
+            "0000:00:02.0": {
+              "cap": 8026371,
+              "sta": 12353,
+              "cap2": 14,
+              "ctl": 64,
+              "ctl2": 67
+            }
+          },
+          "reason_class": null,
+          "semantics": "script_report_not_bus_trace"
+        },
+        {
+          "line": 2,
+          "event": "cap_speed_baseline",
+          "timestamp": "2026-11-06T01:55:08.256977+00:00",
+          "apply": true,
+          "mode": "stage1-cap-speed",
+          "actual": {
+            "558892": 6,
+            "140316": 129,
+            "558108": 3233023232,
+            "574144": 109515187,
+            "574208": 67764416,
+            "573504": 537417728,
+            "573888": 65586,
+            "558608": 0
+          },
+          "links": {
+            "0000:03:00.0": {
+              "cap": 4537409,
+              "sta": 4161,
+              "cap2": 6,
+              "ctl": 320,
+              "ctl2": 0
+            },
+            "0000:00:02.0": {
+              "cap": 8026371,
+              "sta": 12353,
+              "cap2": 14,
+              "ctl": 64,
+              "ctl2": 67
+            }
+          },
+          "reason_class": null,
+          "semantics": "script_report_not_bus_trace"
+        },
+        {
+          "line": 3,
+          "event": "cap_speed_baseline",
+          "timestamp": "2026-11-06T01:55:08.266335+00:00",
+          "apply": true,
+          "mode": "stage1-cap-speed",
+          "actual": {
+            "558892": 6,
+            "140316": 129,
+            "558108": 3233023232,
+            "574144": 109515187,
+            "574208": 67764416,
+            "573504": 537417728,
+            "573888": 65586,
+            "558608": 0
+          },
+          "links": {
+            "0000:03:00.0": {
+              "cap": 4537409,
+              "sta": 4161,
+              "cap2": 6,
+              "ctl": 320,
+              "ctl2": 0
+            },
+            "0000:00:02.0": {
+              "cap": 8026371,
+              "sta": 12353,
+              "cap2": 14,
+              "ctl": 64,
+              "ctl2": 67
+            }
+          },
+          "reason_class": null,
+          "semantics": "script_report_not_bus_trace"
+        },
+        {
+          "line": 4,
+          "event": "before_mmio",
+          "timestamp": "2026-11-06T01:55:08.272990+00:00",
+          "offset": 573888,
+          "old": 65586,
+          "new": 131122,
+          "mask": 196608,
+          "apply": true,
+          "mode": "stage1-cap-speed",
+          "reason_class": null,
+          "semantics": "intent_not_ack"
+        },
+        {
+          "line": 5,
+          "event": "after_mmio",
+          "timestamp": "2026-11-06T01:55:08.279666+00:00",
+          "offset": 573888,
+          "readback": 131122,
+          "apply": true,
+          "mode": "stage1-cap-speed",
+          "reason_class": null,
+          "semantics": "script_report_not_bus_trace"
+        },
+        {
+          "line": 26,
+          "event": "cap_speed_result",
+          "timestamp": "2026-11-06T01:55:10.289032+00:00",
+          "apply": true,
+          "mode": "stage1-cap-speed",
+          "links": {
+            "0000:03:00.0": {
+              "cap": 4537410,
+              "sta": 4161,
+              "cap2": 6,
+              "ctl": 320,
+              "ctl2": 0
+            },
+            "0000:00:02.0": {
+              "cap": 8026371,
+              "sta": 12353,
+              "cap2": 14,
+              "ctl": 64,
+              "ctl2": 67
+            }
+          },
+          "reason_class": null,
+          "semantics": "script_report_not_bus_trace"
+        }
+      ],
+      "limits_may_apply": false
+    },
+    {
+      "status": "ok",
+      "size": 17064,
+      "sha256": "90320483468b6337cdf0dca13be3e599e15de62b85f6265c573e63c94d06e14a",
+      "mtime_ns": 1793930011337566299,
+      "ctime_ns": 1793930011337566299,
+      "timestamps_prove_execution": false,
+      "location": "$REPO/work/override-520/gpu0-stage1-override-1793930007183451370.jsonl",
+      "facts": [
+        {
+          "line": 1,
+          "event": "baseline",
+          "timestamp": "2026-11-06T01:53:27.185367+00:00",
+          "driver_bound": false,
+          "apply": true,
+          "mode": "stage1-override",
+          "links": {
+            "0000:03:00.0": {
+              "cap": 4537409,
+              "sta": 4161,
+              "cap2": 2,
+              "ctl": 320,
+              "ctl2": 0
+            },
+            "0000:00:02.0": {
+              "cap": 8026371,
+              "sta": 12353,
+              "cap2": 14,
+              "ctl": 64,
+              "ctl2": 67
+            }
+          },
+          "reason_class": null,
+          "semantics": "script_report_not_bus_trace"
+        },
+        {
+          "line": 2,
+          "event": "override_baseline",
+          "timestamp": "2026-11-06T01:53:27.193796+00:00",
+          "apply": true,
+          "mode": "stage1-override",
+          "actual": {
+            "558892": 0,
+            "140316": 0,
+            "558108": 3233047808,
+            "574144": 109515187,
+            "574208": 67764416,
+            "573504": 537417728,
+            "573888": 65586,
+            "558608": 0
+          },
+          "reason_class": null,
+          "semantics": "script_report_not_bus_trace"
+        },
+        {
+          "line": 4,
+          "event": "before_mmio",
+          "timestamp": "2026-11-06T01:53:27.207887+00:00",
+          "offset": 558892,
+          "old": 0,
+          "new": 6,
+          "apply": true,
+          "mode": "stage1-override",
+          "reason_class": null,
+          "semantics": "intent_not_ack"
+        },
+        {
+          "line": 5,
+          "event": "after_mmio",
+          "timestamp": "2026-11-06T01:53:27.213549+00:00",
+          "offset": 558892,
+          "readback": 6,
+          "apply": true,
+          "mode": "stage1-override",
+          "reason_class": null,
+          "semantics": "script_report_not_bus_trace"
+        },
+        {
+          "line": 27,
+          "event": "before_mmio",
+          "timestamp": "2026-11-06T01:53:29.238952+00:00",
+          "offset": 140316,
+          "old": 0,
+          "new": 129,
+          "apply": true,
+          "mode": "stage1-override",
+          "reason_class": null,
+          "semantics": "intent_not_ack"
+        },
+        {
+          "line": 28,
+          "event": "after_mmio",
+          "timestamp": "2026-11-06T01:53:29.242570+00:00",
+          "offset": 140316,
+          "readback": 129,
+          "apply": true,
+          "mode": "stage1-override",
+          "reason_class": null,
+          "semantics": "script_report_not_bus_trace"
+        },
+        {
+          "line": 50,
+          "event": "before_mmio",
+          "timestamp": "2026-11-06T01:53:31.314511+00:00",
+          "offset": 558108,
+          "old": 3233047808,
+          "new": 3233023232,
+          "apply": true,
+          "mode": "stage1-override",
+          "reason_class": null,
+          "semantics": "intent_not_ack"
+        },
+        {
+          "line": 51,
+          "event": "after_mmio",
+          "timestamp": "2026-11-06T01:53:31.320716+00:00",
+          "offset": 558108,
+          "readback": 3233023232,
+          "apply": true,
+          "mode": "stage1-override",
+          "reason_class": null,
+          "semantics": "script_report_not_bus_trace"
+        },
+        {
+          "line": 54,
+          "event": "abort",
+          "timestamp": "2026-11-06T01:53:31.338704+00:00",
+          "apply": true,
+          "recovery_writes": false,
+          "mode": "stage1-override",
+          "reason_class": "stop_no_retry",
+          "semantics": "script_report_not_bus_trace"
+        }
+      ],
+      "limits_may_apply": false
+    },
+    {
+      "status": "ok",
+      "size": 812,
+      "sha256": "8ba7a0753d3c57b44af23ba5d42a01f5344b3cd224c841e1bb9e5b5421d244a4",
+      "mtime_ns": 1793928134850149310,
+      "ctime_ns": 1793928134850149310,
+      "timestamps_prove_execution": false,
+      "location": "$REPO/work/stage1/gpu0-1793928132780078956.jsonl",
+      "facts": [
+        {
+          "line": 1,
+          "event": "baseline",
+          "timestamp": "2026-11-06T01:22:12.781988+00:00",
+          "driver_bound": false,
+          "links": {
+            "0000:03:00.0": {
+              "cap": 4537409,
+              "sta": 4161,
+              "cap2": 2,
+              "ctl": 320,
+              "ctl2": 0
+            },
+            "0000:00:02.0": {
+              "cap": 8026371,
+              "sta": 12353,
+              "cap2": 14,
+              "ctl": 64,
+              "ctl2": 67
+            }
+          },
+          "reason_class": null,
+          "semantics": "script_report_not_bus_trace"
+        },
+        {
+          "line": 2,
+          "event": "before_mmio",
+          "timestamp": "2026-11-06T01:22:12.793075+00:00",
+          "offset": 140316,
+          "old": 0,
+          "new": 129,
+          "reason_class": null,
+          "semantics": "intent_not_ack"
+        },
+        {
+          "line": 3,
+          "event": "after_mmio",
+          "timestamp": "2026-11-06T01:22:12.798964+00:00",
+          "offset": 140316,
+          "readback": 129,
+          "reason_class": null,
+          "semantics": "script_report_not_bus_trace"
+        },
+        {
+          "line": 4,
+          "event": "before_mmio",
+          "timestamp": "2026-11-06T01:22:12.805337+00:00",
+          "offset": 558108,
+          "old": 3233047808,
+          "new": 3233023232,
+          "reason_class": null,
+          "semantics": "intent_not_ack"
+        },
+        {
+          "line": 5,
+          "event": "after_mmio",
+          "timestamp": "2026-11-06T01:22:12.810617+00:00",
+          "offset": 558108,
+          "readback": 3233023232,
+          "reason_class": null,
+          "semantics": "script_report_not_bus_trace"
+        },
+        {
+          "line": 6,
+          "event": "abort",
+          "timestamp": "2026-11-06T01:22:14.850577+00:00",
+          "recovery_writes": false,
+          "reason_class": "stop_no_retry",
+          "semantics": "script_report_not_bus_trace"
+        }
+      ],
+      "limits_may_apply": false
+    },
+    {
+      "status": "ok",
+      "size": 17059,
+      "sha256": "6d3f36c8c3736138743a6172eb8fff43a30703ecd372a52f2060ec98e6f43eaa",
+      "mtime_ns": 1793929155314533978,
+      "ctime_ns": 1793929155314533978,
+      "timestamps_prove_execution": false,
+      "location": "$REPO/work/stage1-override/gpu0-stage1-override-1793929151155255357.jsonl",
+      "facts": [
+        {
+          "line": 1,
+          "event": "baseline",
+          "timestamp": "2026-11-06T01:39:11.157214+00:00",
+          "driver_bound": false,
+          "apply": true,
+          "mode": "stage1-override",
+          "links": {
+            "0000:03:00.0": {
+              "cap": 4537409,
+              "sta": 4161,
+              "cap2": 2,
+              "ctl": 320,
+              "ctl2": 0
+            },
+            "0000:00:02.0": {
+              "cap": 8026371,
+              "sta": 12353,
+              "cap2": 14,
+              "ctl": 64,
+              "ctl2": 67
+            }
+          },
+          "reason_class": null,
+          "semantics": "script_report_not_bus_trace"
+        },
+        {
+          "line": 2,
+          "event": "override_baseline",
+          "timestamp": "2026-11-06T01:39:11.166734+00:00",
+          "apply": true,
+          "mode": "stage1-override",
+          "actual": {
+            "558892": 0,
+            "140316": 0,
+            "558108": 3233047808,
+            "574144": 109515187,
+            "574208": 67764416,
+            "573504": 537417728,
+            "573888": 65586,
+            "558608": 0
+          },
+          "reason_class": null,
+          "semantics": "script_report_not_bus_trace"
+        },
+        {
+          "line": 4,
+          "event": "before_mmio",
+          "timestamp": "2026-11-06T01:39:11.181544+00:00",
+          "offset": 558892,
+          "old": 0,
+          "new": 6,
+          "apply": true,
+          "mode": "stage1-override",
+          "reason_class": null,
+          "semantics": "intent_not_ack"
+        },
+        {
+          "line": 5,
+          "event": "after_mmio",
+          "timestamp": "2026-11-06T01:39:11.187269+00:00",
+          "offset": 558892,
+          "readback": 6,
+          "apply": true,
+          "mode": "stage1-override",
+          "reason_class": null,
+          "semantics": "script_report_not_bus_trace"
+        },
+        {
+          "line": 27,
+          "event": "before_mmio",
+          "timestamp": "2026-11-06T01:39:13.234822+00:00",
+          "offset": 140316,
+          "old": 0,
+          "new": 129,
+          "apply": true,
+          "mode": "stage1-override",
+          "reason_class": null,
+          "semantics": "intent_not_ack"
+        },
+        {
+          "line": 28,
+          "event": "after_mmio",
+          "timestamp": "2026-11-06T01:39:13.238733+00:00",
+          "offset": 140316,
+          "readback": 129,
+          "apply": true,
+          "mode": "stage1-override",
+          "reason_class": null,
+          "semantics": "script_report_not_bus_trace"
+        },
+        {
+          "line": 50,
+          "event": "before_mmio",
+          "timestamp": "2026-11-06T01:39:15.286836+00:00",
+          "offset": 558108,
+          "old": 3233047808,
+          "new": 3233023232,
+          "apply": true,
+          "mode": "stage1-override",
+          "reason_class": null,
+          "semantics": "intent_not_ack"
+        },
+        {
+          "line": 51,
+          "event": "after_mmio",
+          "timestamp": "2026-11-06T01:39:15.293780+00:00",
+          "offset": 558108,
+          "readback": 3233023232,
+          "apply": true,
+          "mode": "stage1-override",
+          "reason_class": null,
+          "semantics": "script_report_not_bus_trace"
+        },
+        {
+          "line": 54,
+          "event": "abort",
+          "timestamp": "2026-11-06T01:39:15.315352+00:00",
+          "apply": true,
+          "recovery_writes": false,
+          "mode": "stage1-override",
+          "reason_class": "stop_no_retry",
+          "semantics": "script_report_not_bus_trace"
+        }
+      ],
+      "limits_may_apply": false
+    },
+    {
+      "status": "ok",
+      "size": 526,
+      "sha256": "4c2180916dffa4f40cb7ecec573d8c63f631a8d58c07201b20a9fc78fb093c2c",
+      "mtime_ns": 1794004110513628029,
+      "ctime_ns": 1794004110513628029,
+      "timestamps_prove_execution": false,
+      "location": "$REPO/work/item_d94cb53861/gpu0-dual-1794004110508195856.jsonl",
+      "facts": [
+        {
+          "line": 2,
+          "event": "abort",
+          "timestamp": null,
+          "reason_class": null,
+          "semantics": "script_report_not_bus_trace"
+        }
+      ],
+      "limits_may_apply": false
+    },
+    {
+      "status": "ok",
+      "size": 273337,
+      "sha256": "0f5544f0c4a296dd0b0ff512660c3c29854b62c9e9881e94754af09e148660e8",
+      "mtime_ns": 1794004274594269215,
+      "ctime_ns": 1794004274594269215,
+      "timestamps_prove_execution": false,
+      "location": "$REPO/work/item_d94cb53861/gpu0-dual-1794004274508572209.jsonl",
+      "facts": [],
+      "limits_may_apply": false
+    },
+    {
+      "status": "ok",
+      "size": 587354,
+      "sha256": "448c2160b836f814db586b54f53c28eae84d76ea8b9cfb5df7b602c015cd7480",
+      "mtime_ns": 1794005451095888596,
+      "ctime_ns": 1794005451095888596,
+      "timestamps_prove_execution": false,
+      "location": "$REPO/work/item_be311d325e/gpu0-dual-profile-1794005450984539954.jsonl",
+      "facts": [],
+      "limits_may_apply": false
+    },
+    {
+      "status": "ok",
+      "size": 1053638,
+      "sha256": "475da2844a76f8fd92f51f783bac3c101771f0ff3cfaa541659a1cee93954f6d",
+      "mtime_ns": 1794005317197768673,
+      "ctime_ns": 1794005317197768673,
+      "timestamps_prove_execution": false,
+      "location": "$REPO/work/item_0f91013981/gpu0-dual-profile-1794005316984632966.jsonl",
+      "facts": [],
+      "limits_may_apply": false
+    },
+    {
+      "status": "ok",
+      "size": 531865,
+      "sha256": "fc5b708d53b337ebef44d5c2ddcff219cabcf44dd67af0750a86be666934d98f",
+      "mtime_ns": 1794005123664450835,
+      "ctime_ns": 1794005123664450835,
+      "timestamps_prove_execution": false,
+      "location": "$REPO/work/item_b3003a232b/gpu0-dual-profile-1794005123518674721.jsonl",
+      "facts": [],
+      "limits_may_apply": false
+    },
+    {
+      "status": "size_limit",
+      "size": 22772331,
+      "location": "$REPO/work/item_b9e4e1e329/root0-lnksta-1794002799062628713.jsonl",
+      "facts": [],
+      "limits_may_apply": false
+    }
+  ],
+  "gaps": [],
+  "git": {
+    "history": [
+      {
+        "commit": "1699707cfe5c836a6e6053703d24450f1f3111ff",
+        "committer_epoch": 1793930585,
+        "author_epoch": 1793930585,
+        "execution_proven": false
+      },
+      {
+        "commit": "520df836bfb7e799f9eb057e91440354a39b8fd5",
+        "committer_epoch": 1793929825,
+        "author_epoch": 1793929825,
+        "execution_proven": false
+      },
+      {
+        "commit": "8e50df3619991e0c590f12885810b5852128a744",
+        "committer_epoch": 1793928658,
+        "author_epoch": 1793928658,
+        "execution_proven": false
+      },
+      {
+        "commit": "a902cc192ebf7b640ebfd3e9178253a19f46171f",
+        "committer_epoch": 1793927407,
+        "author_epoch": 1793927407,
+        "execution_proven": false
+      },
+      {
+        "commit": "16f39946d95afe4c63e92404cb0e8bd89c39ac5e",
+        "committer_epoch": 1793925103,
+        "author_epoch": 1793925103,
+        "execution_proven": false
+      },
+      {
+        "commit": "e1bff32c92304a3b6fc1029e4d9c99d459ea8741",
+        "committer_epoch": 1793925032,
+        "author_epoch": 1793925032,
+        "execution_proven": false
+      },
+      {
+        "commit": "c2f4a75bc34cbe8d0e6c3a9d3eeec920596a5861",
+        "committer_epoch": 1793924917,
+        "author_epoch": 1793924917,
+        "execution_proven": false
+      }
+    ],
+    "reflog": [
+      {
+        "commit": "905129260424b61e735ade23db9946a9f9ae1eac",
+        "reflog_epoch": 1794014560,
+        "timezone": "+0000",
+        "execution_proven": false
+      },
+      {
+        "commit": "ceb943228f6757fe25e114df59d5d3e8b3b1d5ad",
+        "reflog_epoch": 1794008477,
+        "timezone": "+0000",
+        "execution_proven": false
+      },
+      {
+        "commit": "ceb943228f6757fe25e114df59d5d3e8b3b1d5ad",
+        "reflog_epoch": 1794008472,
+        "timezone": "+0000",
+        "execution_proven": false
+      },
+      {
+        "commit": "ceb943228f6757fe25e114df59d5d3e8b3b1d5ad",
+        "reflog_epoch": 1794008472,
+        "timezone": "+0000",
+        "execution_proven": false
+      },
+      {
+        "commit": "ef45a8d3dd4cdbcde6a4611dd9ecda75ac4efb56",
+        "reflog_epoch": 1794008440,
+        "timezone": "+0000",
+        "execution_proven": false
+      },
+      {
+        "commit": "ef45a8d3dd4cdbcde6a4611dd9ecda75ac4efb56",
+        "reflog_epoch": 1794008437,
+        "timezone": "+0000",
+        "execution_proven": false
+      },
+      {
+        "commit": "ef45a8d3dd4cdbcde6a4611dd9ecda75ac4efb56",
+        "reflog_epoch": 1794008437,
+        "timezone": "+0000",
+        "execution_proven": false
+      },
+      {
+        "commit": "ef45a8d3dd4cdbcde6a4611dd9ecda75ac4efb56",
+        "reflog_epoch": 1794008437,
+        "timezone": "+0000",
+        "execution_proven": false
+      },
+      {
+        "commit": "d6510ff2b72481327cfbc6a59083f12fc0e5f6d2",
+        "reflog_epoch": 1794005118,
+        "timezone": "+0000",
+        "execution_proven": false
+      },
+      {
+        "commit": "ce36821bc9e7ca8db1df6496d38427fa6ecca1e7",
+        "reflog_epoch": 1794004102,
+        "timezone": "+0000",
+        "execution_proven": false
+      },
+      {
+        "commit": "9e511a2f4fc8ab32d0bc8d9f4f8898b9e02c63eb",
+        "reflog_epoch": 1794002790,
+        "timezone": "+0000",
+        "execution_proven": false
+      },
+      {
+        "commit": "1699707cfe5c836a6e6053703d24450f1f3111ff",
+        "reflog_epoch": 1793930726,
+        "timezone": "+0000",
+        "execution_proven": false
+      },
+      {
+        "commit": "520df836bfb7e799f9eb057e91440354a39b8fd5",
+        "reflog_epoch": 1793929960,
+        "timezone": "+0000",
+        "execution_proven": false
+      },
+      {
+        "commit": "8e50df3619991e0c590f12885810b5852128a744",
+        "reflog_epoch": 1793928998,
+        "timezone": "+0000",
+        "execution_proven": false
+      },
+      {
+        "commit": "a902cc192ebf7b640ebfd3e9178253a19f46171f",
+        "reflog_epoch": 1793927888,
+        "timezone": "+0000",
+        "execution_proven": false
+      },
+      {
+        "commit": "16f39946d95afe4c63e92404cb0e8bd89c39ac5e",
+        "reflog_epoch": 1793925128,
+        "timezone": "+0000",
+        "execution_proven": false
+      },
+      {
+        "commit": "e1bff32c92304a3b6fc1029e4d9c99d459ea8741",
+        "reflog_epoch": 1793925054,
+        "timezone": "+0000",
+        "execution_proven": false
+      },
+      {
+        "commit": "c2f4a75bc34cbe8d0e6c3a9d3eeec920596a5861",
+        "reflog_epoch": 1793924937,
+        "timezone": "+0000",
+        "execution_proven": false
+      },
+      {
+        "commit": "ef45a8d3dd4cdbcde6a4611dd9ecda75ac4efb56",
+        "reflog_epoch": 1793923871,
+        "timezone": "+0000",
+        "execution_proven": false
+      },
+      {
+        "commit": "ef45a8d3dd4cdbcde6a4611dd9ecda75ac4efb56",
+        "reflog_epoch": 1793923871,
+        "timezone": "+0000",
+        "execution_proven": false
+      },
+      {
+        "commit": "ef45a8d3dd4cdbcde6a4611dd9ecda75ac4efb56",
+        "reflog_epoch": 1793923871,
+        "timezone": "+0000",
+        "execution_proven": false
+      }
+    ],
+    "objects": [
+      {
+        "commit": "c2f4a75bc34cbe8d0e6c3a9d3eeec920596a5861",
+        "sha256": "34208c695b1a4c89d126950aa0219724f94f93ca7452aaeb09dcdd6b42372357",
+        "archive_match": "c2f4a75bc34cbe8d0e6c3a9d3eeec920596a5861",
+        "source": {
+          "primitives": [
+            {
+              "kind": "struct.pack_into",
+              "line": 98,
+              "format": "<I",
+              "syntactic_mapping_argument": true
+            }
+          ],
+          "resource_open": [
+            {
+              "line": 84,
+              "api": "os.open",
+              "resource": "resource0",
+              "flags_mentioned": [
+                "os.O_RDONLY",
+                "os.O_RDWR",
+                "os.O_SYNC"
+              ],
+              "runtime_flags_proven": false
+            }
+          ],
+          "mapping_lines": [
+            86
+          ],
+          "mapping": [
+            {
+              "line": 86,
+              "flags_mentioned": [
+                "mmap.MAP_SHARED",
+                "mmap.PROT_READ",
+                "mmap.PROT_WRITE"
+              ],
+              "runtime_attributes_proven": false
+            }
+          ],
+          "observed_execution": false,
+          "parse_status": "ok",
+          "analysis": "syntactic only; aliases/dynamic dataflow may be incomplete"
+        },
+        "execution_proven": false
+      },
+      {
+        "commit": "e1bff32c92304a3b6fc1029e4d9c99d459ea8741",
+        "sha256": "f5cca64aed395e1b53b0608f7851d6e7d1557b9412d4a3a9d37a417a63f0269b",
+        "archive_match": "e1bff32c92304a3b6fc1029e4d9c99d459ea8741",
+        "source": {
+          "primitives": [
+            {
+              "kind": "struct.pack_into",
+              "line": 98,
+              "format": "<I",
+              "syntactic_mapping_argument": true
+            }
+          ],
+          "resource_open": [
+            {
+              "line": 84,
+              "api": "os.open",
+              "resource": "resource0",
+              "flags_mentioned": [
+                "os.O_RDONLY",
+                "os.O_RDWR",
+                "os.O_SYNC"
+              ],
+              "runtime_flags_proven": false
+            }
+          ],
+          "mapping_lines": [
+            86
+          ],
+          "mapping": [
+            {
+              "line": 86,
+              "flags_mentioned": [
+                "mmap.MAP_SHARED",
+                "mmap.PROT_READ",
+                "mmap.PROT_WRITE"
+              ],
+              "runtime_attributes_proven": false
+            }
+          ],
+          "observed_execution": false,
+          "parse_status": "ok",
+          "analysis": "syntactic only; aliases/dynamic dataflow may be incomplete"
+        },
+        "execution_proven": false
+      },
+      {
+        "commit": "16f39946d95afe4c63e92404cb0e8bd89c39ac5e",
+        "sha256": "c5f61e73c47221ca0ccbf1c9a8e1504d9a42dbe3c8ef5f66a7c5008e10688f9d",
+        "archive_match": "16f39946d95afe4c63e92404cb0e8bd89c39ac5e",
+        "source": {
+          "primitives": [
+            {
+              "kind": "struct.pack_into",
+              "line": 101,
+              "format": "<I",
+              "syntactic_mapping_argument": true
+            }
+          ],
+          "resource_open": [
+            {
+              "line": 87,
+              "api": "os.open",
+              "resource": "resource0",
+              "flags_mentioned": [
+                "os.O_RDONLY",
+                "os.O_RDWR",
+                "os.O_SYNC"
+              ],
+              "runtime_flags_proven": false
+            }
+          ],
+          "mapping_lines": [
+            89
+          ],
+          "mapping": [
+            {
+              "line": 89,
+              "flags_mentioned": [
+                "mmap.MAP_SHARED",
+                "mmap.PROT_READ",
+                "mmap.PROT_WRITE"
+              ],
+              "runtime_attributes_proven": false
+            }
+          ],
+          "observed_execution": false,
+          "parse_status": "ok",
+          "analysis": "syntactic only; aliases/dynamic dataflow may be incomplete"
+        },
+        "execution_proven": false
+      },
+      {
+        "commit": "1699707cfe5c836a6e6053703d24450f1f3111ff",
+        "sha256": "10f3003dc4f3becfff80ff4751e3286f7f4e07b1be1aa5903d6e84ce3140a7d4",
+        "archive_match": null,
+        "source": {
+          "primitives": [
+            {
+              "kind": "ctypes_uint32_assignment",
+              "line": 118
+            }
+          ],
+          "resource_open": [
+            {
+              "line": 98,
+              "api": "os.open",
+              "resource": "resource0",
+              "flags_mentioned": [
+                "os.O_RDONLY",
+                "os.O_RDWR",
+                "os.O_SYNC"
+              ],
+              "runtime_flags_proven": false
+            }
+          ],
+          "mapping_lines": [],
+          "mapping": [],
+          "observed_execution": false,
+          "parse_status": "ok",
+          "analysis": "syntactic only; aliases/dynamic dataflow may be incomplete"
+        },
+        "execution_proven": false
+      },
+      {
+        "commit": "520df836bfb7e799f9eb057e91440354a39b8fd5",
+        "sha256": "258b4a9f315296bf77089217f47578d3960a74e59712d6225215537c79e56549",
+        "archive_match": null,
+        "source": {
+          "primitives": [
+            {
+              "kind": "ctypes_uint32_assignment",
+              "line": 116
+            }
+          ],
+          "resource_open": [
+            {
+              "line": 96,
+              "api": "os.open",
+              "resource": "resource0",
+              "flags_mentioned": [
+                "os.O_RDONLY",
+                "os.O_RDWR",
+                "os.O_SYNC"
+              ],
+              "runtime_flags_proven": false
+            }
+          ],
+          "mapping_lines": [],
+          "mapping": [],
+          "observed_execution": false,
+          "parse_status": "ok",
+          "analysis": "syntactic only; aliases/dynamic dataflow may be incomplete"
+        },
+        "execution_proven": false
+      },
+      {
+        "commit": "8e50df3619991e0c590f12885810b5852128a744",
+        "sha256": "9baa759aa27688bd00a41e997bbcf283ab22839999b765e5220c8922048403f0",
+        "archive_match": null,
+        "source": {
+          "primitives": [
+            {
+              "kind": "ctypes_uint32_assignment",
+              "line": 104
+            }
+          ],
+          "resource_open": [
+            {
+              "line": 88,
+              "api": "os.open",
+              "resource": "resource0",
+              "flags_mentioned": [
+                "os.O_RDONLY",
+                "os.O_RDWR",
+                "os.O_SYNC"
+              ],
+              "runtime_flags_proven": false
+            }
+          ],
+          "mapping_lines": [],
+          "mapping": [],
+          "observed_execution": false,
+          "parse_status": "ok",
+          "analysis": "syntactic only; aliases/dynamic dataflow may be incomplete"
+        },
+        "execution_proven": false
+      },
+      {
+        "commit": "a902cc192ebf7b640ebfd3e9178253a19f46171f",
+        "sha256": "47cf84c952ab3255d57178db1e37af4058abcfcb891e510fe0843ef2e9a822bd",
+        "archive_match": null,
+        "source": {
+          "primitives": [
+            {
+              "kind": "ctypes_uint32_assignment",
+              "line": 101
+            }
+          ],
+          "resource_open": [
+            {
+              "line": 85,
+              "api": "os.open",
+              "resource": "resource0",
+              "flags_mentioned": [
+                "os.O_RDONLY",
+                "os.O_RDWR",
+                "os.O_SYNC"
+              ],
+              "runtime_flags_proven": false
+            }
+          ],
+          "mapping_lines": [],
+          "mapping": [],
+          "observed_execution": false,
+          "parse_status": "ok",
+          "analysis": "syntactic only; aliases/dynamic dataflow may be incomplete"
+        },
+        "execution_proven": false
+      }
+    ],
+    "coverage": {
+      "history": {
+        "status": "ok",
+        "returncode": 0
+      },
+      "reflog": {
+        "status": "ok",
+        "returncode": 0
+      },
+      "limits": {
+        "history": 48,
+        "reflog": 128,
+        "objects": 51,
+        "history_limit_reached": false,
+        "reflog_limit_reached": false,
+        "note": "Missing/shallow/expired objects are unknown; no fetch is permitted; timestamps are not execution evidence"
+      }
+    }
+  },
+  "archive_registry": {
+    "34208c695b1a4c89d126950aa0219724f94f93ca7452aaeb09dcdd6b42372357": "c2f4a75bc34cbe8d0e6c3a9d3eeec920596a5861",
+    "f5cca64aed395e1b53b0608f7851d6e7d1557b9412d4a3a9d37a417a63f0269b": "e1bff32c92304a3b6fc1029e4d9c99d459ea8741",
+    "c5f61e73c47221ca0ccbf1c9a8e1504d9a42dbe3c8ef5f66a7c5008e10688f9d": "16f39946d95afe4c63e92404cb0e8bd89c39ac5e"
+  },
+  "journal": {
+    "events": [],
+    "boots": [
+      {
+        "index": -46,
+        "boot_id": "4e80964b6fc84329ae5b53bb593d4dae",
+        "displayed_times": [
+          "2026-10-16 15:34:48",
+          "2026-10-16 16:01:02"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -45,
+        "boot_id": "6046ef87041c4643aafc5bf7f63da662",
+        "displayed_times": [
+          "2026-10-16 16:02:49",
+          "2026-10-16 16:36:55"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -44,
+        "boot_id": "041495fa45e94b5398a585a1952fa193",
+        "displayed_times": [
+          "2026-10-16 16:38:42",
+          "2026-10-16 17:23:31"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -43,
+        "boot_id": "cd288665f7da441bb90bc030019e53c9",
+        "displayed_times": [
+          "2026-10-16 17:23:32",
+          "2026-10-16 19:16:08"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -42,
+        "boot_id": "fc6f4451ad0a44cbad0f1a789ec6c87a",
+        "displayed_times": [
+          "2026-10-16 19:19:42",
+          "2026-10-16 20:54:17"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -41,
+        "boot_id": "077f96c0e43f4bce93ab5b02c8d01a0b",
+        "displayed_times": [
+          "2026-10-16 20:56:50",
+          "2026-10-16 20:59:20"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -40,
+        "boot_id": "dbd309daba0e46c59fbc6d2e6522198f",
+        "displayed_times": [
+          "2026-10-16 21:04:21",
+          "2026-10-16 21:09:51"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -39,
+        "boot_id": "2d6ece2a87ed49dd825d9bbdf183b48f",
+        "displayed_times": [
+          "2026-10-16 21:11:38",
+          "2026-10-16 21:15:02"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -38,
+        "boot_id": "5504363c73f242868a72d96ff0a15d5b",
+        "displayed_times": [
+          "2026-10-17 12:29:57",
+          "2026-10-18 13:21:36"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -37,
+        "boot_id": "d7de897c896144b7b2e454b22bd02faa",
+        "displayed_times": [
+          "2026-10-18 13:21:39",
+          "2026-10-18 15:07:51"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -36,
+        "boot_id": "595e1779fe914199937ca809eaaf05a7",
+        "displayed_times": [
+          "2026-10-18 15:07:54",
+          "2026-10-20 15:28:34"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -35,
+        "boot_id": "4a77565a9eb44def805d55f3dd067bac",
+        "displayed_times": [
+          "2026-10-20 15:30:21",
+          "2026-10-20 15:37:31"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -34,
+        "boot_id": "5a83a4bfbaf14b36a752aa8ae8faaa3c",
+        "displayed_times": [
+          "2026-10-20 15:42:47",
+          "2026-10-20 15:49:59"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -33,
+        "boot_id": "78f5a8689b4a472d800033db909e3c36",
+        "displayed_times": [
+          "2026-10-20 15:50:02",
+          "2026-10-22 14:07:11"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -32,
+        "boot_id": "a57e63c230eb4628adbd5ad8c5015d5b",
+        "displayed_times": [
+          "2026-10-22 14:07:14",
+          "2026-10-22 14:37:54"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -31,
+        "boot_id": "e66e6d11fb2042c38a48af4f82aae4f5",
+        "displayed_times": [
+          "2026-10-22 14:39:54",
+          "2026-10-22 14:42:27"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -30,
+        "boot_id": "47c95a503b09493cb1a9afa3f5e1806e",
+        "displayed_times": [
+          "2026-10-22 14:44:13",
+          "2026-10-22 17:11:20"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -29,
+        "boot_id": "77c278668ff341a2b02c09f2c9fd6df4",
+        "displayed_times": [
+          "2026-10-22 17:11:24",
+          "2026-10-22 19:38:00"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -28,
+        "boot_id": "3bc0517dace04b0ca002ab66631deb26",
+        "displayed_times": [
+          "2026-10-22 19:37:01",
+          "2026-10-23 18:01:59"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -27,
+        "boot_id": "c40746dcab7f4a9ca02ac3b58e22a184",
+        "displayed_times": [
+          "2026-10-23 18:04:03",
+          "2026-10-23 18:50:29"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -26,
+        "boot_id": "ebaa8be3d32b412b9e9571217d41224a",
+        "displayed_times": [
+          "2026-10-23 18:52:17",
+          "2026-10-23 19:48:06"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -25,
+        "boot_id": "31c27db76a3045f695c4c4879f206be4",
+        "displayed_times": [
+          "2026-10-23 19:48:09",
+          "2026-10-23 20:20:42"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -24,
+        "boot_id": "fdc031af056543fbb3abb2f3c7dea07d",
+        "displayed_times": [
+          "2026-10-23 20:20:44",
+          "2026-10-23 20:31:01"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -23,
+        "boot_id": "067d762188b446828865e9569f656308",
+        "displayed_times": [
+          "2026-10-23 20:31:03",
+          "2026-10-23 20:41:51"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -22,
+        "boot_id": "8239689bdcb44d268a997f4eb8b30d03",
+        "displayed_times": [
+          "2026-10-23 20:41:54",
+          "2026-10-23 20:50:54"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -21,
+        "boot_id": "25b352c722d7465ba8a7c8bf632f950f",
+        "displayed_times": [
+          "2026-10-23 20:51:57",
+          "2026-10-23 20:55:39"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -20,
+        "boot_id": "8ab1714929df4b75a0aed2b1f8cf5ff5",
+        "displayed_times": [
+          "2026-10-23 20:55:41",
+          "2026-10-24 17:29:53"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -19,
+        "boot_id": "4dc79ac9b03244c192e6fbd0f661cc88",
+        "displayed_times": [
+          "2026-10-24 17:30:57",
+          "2026-10-26 13:12:44"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -18,
+        "boot_id": "515714802dd34eedb08a7bb752f97d2c",
+        "displayed_times": [
+          "2026-10-26 13:14:42",
+          "2026-10-26 13:20:11"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -17,
+        "boot_id": "4acb8e4993694c56a758e8d1c19be72f",
+        "displayed_times": [
+          "2026-10-26 13:22:00",
+          "2026-10-26 13:28:55"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -16,
+        "boot_id": "e11e91ca74a648a7be1f0b63cc437770",
+        "displayed_times": [
+          "2026-10-26 13:28:58",
+          "2026-10-26 22:47:20"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -15,
+        "boot_id": "7809e9ff9e8d47bf944a1ca156fa49ca",
+        "displayed_times": [
+          "2026-10-26 22:48:00",
+          "2026-10-26 22:56:23"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -14,
+        "boot_id": "9242e489f2eb4717afd680e507c9a338",
+        "displayed_times": [
+          "2026-10-26 22:56:26",
+          "2026-10-26 23:16:12"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -13,
+        "boot_id": "447b42ed581a45bea38d6014b0709cb8",
+        "displayed_times": [
+          "2026-10-26 23:16:47",
+          "2026-10-26 23:50:13"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -12,
+        "boot_id": "649c52871cb640819944d1787318a8ea",
+        "displayed_times": [
+          "2026-10-26 23:50:16",
+          "2026-10-27 00:04:07"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -11,
+        "boot_id": "63892fd76aa446d1bd621b5311952278",
+        "displayed_times": [
+          "2026-10-27 00:04:09",
+          "2026-10-27 01:05:41"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -10,
+        "boot_id": "ff035aaf63d44289a4fc65514a8ed525",
+        "displayed_times": [
+          "2026-10-27 01:06:15",
+          "2026-10-27 01:35:44"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -9,
+        "boot_id": "f998c5a450e34feaba8c230eec6604c1",
+        "displayed_times": [
+          "2026-10-27 01:35:42",
+          "2026-10-29 19:18:23"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -8,
+        "boot_id": "5c02fa4305a04584969ccd85506dba87",
+        "displayed_times": [
+          "2026-10-29 19:18:26",
+          "2026-10-29 20:14:52"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -7,
+        "boot_id": "0601977ee7444227b4dc7e4ad8fc3ee2",
+        "displayed_times": [
+          "2026-10-29 20:14:54",
+          "2026-11-04 18:21:57"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -6,
+        "boot_id": "fd5acae0cca944168fb9c6f9507e8904",
+        "displayed_times": [
+          "2026-11-04 18:22:30",
+          "2026-11-04 21:02:04"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -5,
+        "boot_id": "14a6094b9ffe40d89cec13e7a9a609a7",
+        "displayed_times": [
+          "2026-11-04 21:01:19",
+          "2026-11-04 21:21:30"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -4,
+        "boot_id": "7b69ad1702e3482ea633596918510c1a",
+        "displayed_times": [
+          "2026-11-04 21:21:32",
+          "2026-11-06 00:33:43"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -3,
+        "boot_id": "7518c0d9e36b427587663b9378bf3751",
+        "displayed_times": [
+          "2026-11-06 00:33:46",
+          "2026-11-06 01:24:28"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -2,
+        "boot_id": "4b699d5aa5fe4592bc723992e6549f0b",
+        "displayed_times": [
+          "2026-11-06 01:24:31",
+          "2026-11-06 01:42:03"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": -1,
+        "boot_id": "cbf598eae02a45309c8c362c0ecca9d8",
+        "displayed_times": [
+          "2026-11-06 01:42:06",
+          "2026-11-06 02:18:21"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      },
+      {
+        "index": 0,
+        "boot_id": "ae9b7867efcd43bba11f12b568036860",
+        "displayed_times": [
+          "2026-11-06 02:18:24",
+          "2026-11-07 01:20:10"
+        ],
+        "displayed_timezone": "UTC (collector subprocess environment)"
+      }
+    ],
+    "query_status": "ok",
+    "boot_status": "ok",
+    "scope": "accessible journal only; missing permissions/rotation/volatile boots may hide events",
+    "complete_visibility_proven": false,
+    "event_limit": 128,
+    "boot_limit": 64,
+    "event_limit_reached": false,
+    "boot_limit_may_apply": false
+  },
+  "collector_file": {
+    "status": "ok",
+    "size": 35736,
+    "sha256": "8a19008aa3f96d25f39429e39abdf4a8ac021ad224acc01ad2f5d174a8b12879",
+    "mtime_ns": 1794014560767522918,
+    "ctime_ns": 1794014560767522918,
+    "timestamps_prove_execution": false
+  },
+  "search_scope": [
+    "$REPO/",
+    "$HOME/Downloads",
+    "$HOME/Desktop",
+    "$REPO/"
+  ],
+  "saved_commit_object": {
+    "status": "unavailable",
+    "execution_proven": false
+  },
+  "assessment": {
+    "executed_crash_writer": "Unknown",
+    "actual_pcie_store_sequence": "Unknown",
+    "decision": "NO-GO",
+    "next_hardware_test_authorized": false,
+    "note": "A matching current file or command-history entry does not prove the bytes executed at the crash",
+    "grades": [
+      "Confirmed",
+      "Strongly supported",
+      "Possible",
+      "Unknown"
+    ]
+  },
+  "findings": [
+    {
+      "claim": "Current readable copies match an archived source",
+      "grade": "Confirmed",
+      "scope": "current snapshot only; not execution"
+    },
+    {
+      "claim": "A saved writer-invocation command syntax is present",
+      "grade": "Confirmed",
+      "scope": "saved history record only; not proof that the command ran"
+    },
+    {
+      "claim": "The original crash used struct.pack_into on BAR0",
+      "grade": "Unknown",
+      "scope": "manual correlation of contemporaneous provenance is still required"
+    },
+    {
+      "claim": "A transient clear caused the actual GPU loss",
+      "grade": "Possible",
+      "scope": "source/RAM mechanism; PCIe delivery and crash runtime are not established"
+    }
+  ],
+  "coverage": {
+    "depth": 5,
+    "entries": 8192,
+    "sources": 48,
+    "logs": 48,
+    "matches_per_input": 128,
+    "history_lines": 50000,
+    "log_lines": 10000,
+    "source_bytes": 524288,
+    "log_bytes": 2097152,
+    "note": "All finite searches are incomplete; absence of matches is not absence of execution"
+  }
+}
