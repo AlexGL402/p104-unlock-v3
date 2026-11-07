@@ -1,0 +1,11 @@
+name: T5600 forensic collector (fixtures and RAM only)
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  collector:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m unittest discover -s tests -p 'test_t5600_forensics.py' -v
+      - run: python3 -m py_compile tools/collect_t5600_forensics.py tests/test_t5600_forensics.py

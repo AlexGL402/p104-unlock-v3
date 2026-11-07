@@ -1,0 +1,11 @@
+name: Read-only dual-channel sampler (synthetic)
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  dual-sampler:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m unittest discover -s tests -p 'test_dual*.py' -v
+      - run: python3 -m py_compile pcie_dual_sampler.py design/p104_dual_plan.py tests/test_dual_design.py tests/test_dual_sampler.py

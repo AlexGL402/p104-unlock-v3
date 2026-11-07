@@ -1,0 +1,11 @@
+name: Read-only dual sampler phase profiling (synthetic)
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  dual-profile:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m unittest discover -s tests -p 'test_dual_profile.py' -v
+      - run: python3 -m py_compile pcie_dual_profile.py tests/test_dual_profile.py
