@@ -1,5 +1,88 @@
 # P104 / T5600: решение о переходе с Gen1 на Gen2
 
+## Current decision after successful native SPEED-only test
+
+New operator report: preparation PASS, all four MMIO steps and both TLS=2;
+SPEED `20085800 -> 20045800` exact readback, no loss, but both links Gen1 x4.
+These latest results are supplied by the operator; their JSONL has not been
+independently audited here. Earlier decisions below predate this result.
+
+**Next proposed operation: one Root Port Retrain Link, with no MMIO/TLS writes.**
+This is a test recommendation, not proof of necessity or a hardware executor.
+
+| Sequence | Activation and interpretation |
+| --- | --- |
+| Windows ApplyLiveGroup | Prefix/CYA -> SPEED -> cap-speed/VSEC -> TLS -> RetrainBoth. Application SPEED writes omit CHANGE_SPEED; Windows/NVIDIA context and VSEC differ. Not a byte-for-byte Linux recipe. |
+| Earlier T5600 retrain | CAP/TLS ready, initial SPEED `20085800`; one Root RL, still Gen1. Post-RL SPEED was not recorded. |
+| Current T5600 | Prefix -> cap-speed -> TLS -> native SPEED `20045800`; no subsequent trigger, still Gen1. |
+| Next controlled test | Leave all the above unchanged; one Root RL only. This isolates retrain with the now-verified Gen2 internal request. |
+
+Source: [Windows SPEED/TLS/RetrainBoth](../src/P104Gen2x4.cs#L555),
+[Windows activation caller](../src/P104Gen2x4.cs#L1285),
+[old T5600 initial SPEED and retrain records](https://github.com/AlexGL402/p104-unlock-v3/blob/ceb943228f6757fe25e114df59d5d3e8b3b1d5ad/evidence/t5600/work/cap-retrain-result/gpu0-stage2-cap-retrain-1793930796885371367.jsonl#L1-L18).
+Windows writes RL on both ends with DWORD PCI writes. Do not copy those writes:
+use only the downstream Root's **16-bit** Link Control, avoiding Link Status/W1C.
+
+[Nouveau GK104](https://github.com/torvalds/linux/blob/v6.8/drivers/gpu/drm/nouveau/nvkm/subdev/pci/gk104.c)
+sets SPEED and then bit0 separately. This supports an alternative proprietary
+trigger (`20045800 -> 20045801`, bit0 only) but does not establish that GP104 requires it; the Pascal gp100 PCI
+table lacks those GK104 speed callbacks. If Root RL succeeds, CHANGE_SPEED was
+unnecessary for this trial. If it fails, CHANGE_SPEED is still only a candidate,
+not a proven remedy. Do not combine the two triggers or add VSEC/other gates.
+
+### Exact proposed admission and one-shot action
+
+* Fixed GPU `0000:03:00.0` / Root `0000:00:02.0`; unbound GPU, D0/runtime
+  active, MSE=1/BME=0, Root D0/MSE=1; identity/topology/BAR range unchanged.
+* Eight DWORDs equal the cap-ready profile **except SPEED is now `20045800`**:
+  `8872C=6, 2241C=81, 8841C=C0B40500, 8C1C0=20032, 8C2C0=068711B3,
+  8C300=040A00C0, 88610=0, 8C040=20045800`. ACTIVE/directive zero.
+* GPU CAP=`00453C42`, CAP2=6; Root Gen3 x16 capability; both TLS=2;
+  both negotiated Gen1 x4. Fresh zero AER/Device Status errors and no pending
+  transactions. Root LT=0, DLLLA=1, Link Disable=0 and RL=0 before the trigger.
+  Capture and freeze other controls; exclude competing bind/PM/config writers.
+* Consume the one-shot permit before one config-word write at Root offset
+  `0xA0`: `new = old | 0x0020`. If the verified old word is `0040`, new is
+  `0060`; never blindly assume that old word. No endpoint RL, no TLS rewrite,
+  no BAR0 store, no retry/manual RL clear, rollback, reset, or driver operation.
+  [Linux pcie_retrain_link](https://github.com/torvalds/linux/blob/v6.8/drivers/pci/pci.c)
+  likewise checks for existing training before setting Root RL; its optional
+  erratum-driven extra clear is not an authorization for a second write here.
+
+### Observation, STOP, and risk
+
+After the trigger, poll **Root only**, bounded to two seconds. Training=1 is an
+expected retrain phase: record it and prohibit all GPU config/MMIO access.
+DLLLA=0, Root read/identity failure, AER error, or Training still set at the deadline => STOP,
+no endpoint readback or recovery. Evaluate width/speed only with LT=0/DLLLA=1;
+accept only x4 at Gen1/Gen2 while settling. Recheck Root immediately before and
+after every eventual endpoint read. This requires an observation path distinct
+from the SPEED-only tool's immediate-STOP-on-Training guard, not weaker admission.
+
+Once Root is safely idle, check both LNKSTA, CAP/CAP2/TLS/AER and a read-only
+SPEED sample if safe. Success requires observed **5 GT/s x4 on both ends** with
+safe subsequent observations; LBMS, RL self-clear, or missed Training are not
+success/ACK. Stable Gen1 at the deadline is FAIL/no-Gen2, with no next trigger.
+A post-SPEED value of `20045800` versus a reverted value is useful to distinguish
+an insufficient activation path from changed internal request state; neither
+alone identifies the cause. No GPU access after observed link loss.
+
+Risk is real: retrain enters link recovery and now requests a new physical speed.
+Its prior nonfatal result at a different initial SPEED does not guarantee safety.
+Gen1 fallback, Link Down and cold recovery remain possible; no numerical risk
+estimate follows from these few trials. AER=0 does not exclude a failed physical
+attempt. Operator AC recovery interrupts GPU1; the tool must never perform it.
+Even successful Gen2 here would not establish NVIDIA/CUDA stability.
+
+Do not reuse stage2-cap-retrain unchanged: it expects old SPEED and also writes
+TLS. A future separately authorized Root-retrain-only tool must admit this new
+baseline; no such executor is added in this decision update.
+
+---
+
+## Historical analysis (before the new successful SPEED-only result)
+
+
 Новое source-level расследование: [Root cause investigation](linux-gen2-root-cause-investigation.md).
 В исходном Linux-порте найден скрытый clear destination внутри CPython
 `struct.pack_into`, вызываемой прямо на MMIO. RAM-only тест подтверждает
