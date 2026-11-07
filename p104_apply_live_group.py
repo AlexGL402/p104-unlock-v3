@@ -16,6 +16,8 @@ from design.p104_live_group_build import GROUP, load
 
 POST_SPEED = dict(ro.CAP_READY)
 POST_SPEED[0x8C040] = 0x20045800
+POST_SPEED_SYS_MAX_GEN2 = dict(POST_SPEED)
+POST_SPEED_SYS_MAX_GEN2[0x8C1C0] = 0x00120032
 APPLIED = dict(POST_SPEED)
 APPLIED[0x88610] = 1
 BASELINES = {'factory': ro.FACTORY, 'cap-ready': ro.CAP_READY,
@@ -31,6 +33,7 @@ class LiveGroup(ro.Adapter):
         self.rw = False
         self.attempts, self.returned_stores, self.skipped, self.mask_failures = [], [], [], []
         self.frozen = None
+        self.accepted_initial = None
 
     def record(self, event, **fields):
         if event == 'baseline':
@@ -142,7 +145,11 @@ class LiveGroup(ro.Adapter):
     def exact_initial(self):
         frame = self.guard()
         actual = {offset: self.read_word(offset) for offset in ro.FACTORY}
-        expected = BASELINES[self.initial_state]
+        expected = (self.accepted_initial if self.accepted_initial is not None
+                    else BASELINES[self.initial_state])
+        if (self.accepted_initial is None and self.initial_state == 'post-speed' and
+            actual == POST_SPEED_SYS_MAX_GEN2):
+            expected = POST_SPEED_SYS_MAX_GEN2
         self.record('initial_bar', state=self.initial_state, expected=expected, actual=actual)
         if actual != expected:
             raise ro.Stop('exact selected initial state mismatch; no automatic preparation')
@@ -160,6 +167,7 @@ class LiveGroup(ro.Adapter):
             raise ro.Stop('initial full Link Control 2 words outside selected profile')
         if any(v['sta'] & 15 > (v['cap'] & 15) for v in frame['links'].values()):
             raise ro.Stop('initial physical speed contradicts declared maximum')
+        self.accepted_initial = dict(expected)  # Freeze the exact admitted variant.
         self.frozen = frame['links']
         return frame
 

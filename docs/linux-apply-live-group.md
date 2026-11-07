@@ -99,3 +99,30 @@ mandatory repeat of prior hardware diagnostics. Preserve the entire JSONL after
 any failure, do not automatically rerun. No new functional test scenarios were
 added per request: validation covers recipe comparison against actual C# constants
 and RMW semantics, compiler build, existing assembly gate, and Python syntax.
+
+
+## Narrow post-speed SYSTEM_MAX_SPEED variant
+
+Only `--initial-state post-speed` additionally accepts the exact eight-DWORD
+profile with `8C1C0=00120032` instead of `00020032`. The other seven words,
+CAP/CAP2/TLS/link/driver/power/AER guards remain identical. The admitted full
+variant is frozen across admission rechecks; no bit is globally ignored and
+other initial-state profiles are unchanged.
+
+In the related-family [envytools map](https://github.com/envytools/envytools/blob/f102b82381f3f11cee113d16374c87091db039d9/rnndb/bus/pci.xml#L525-L536),
+[21:20] is SYSTEM_MAX_SPEED, separate from LNK_CAP_SPEED [17:16]. Field 1
+(bit20=1, bit21=0) decodes to 5 GT/s, consistent with the
+[Nouveau GK104 decoder](https://github.com/torvalds/linux/blob/v6.8/drivers/gpu/drm/nouveau/nvkm/subdev/pci/gk104.c#L111-L126).
+This is an interpretation supported by related-family sources, not proof of
+which actor changed the field on this GP104. It does not contradict the Gen2
+target. Published Windows values already include `00110036 -> 00120036`
+([historical fingerprint](https://github.com/skbskhud/p104-gen2-unlock/blob/0bbfb290ce4ee1bd6da1bfc9008f8173ff560d15/docs/04-硬件事实表.md#L209-L228),
+[existing project comparison](linux-gen2-root-cause-investigation.md#41-значения-не-объединять-разные-windows-снимки)).
+Older T5600 evidence with `00020032` remains historical; it is not rewritten.
+
+The actual Windows mask is F0000, bits 16–19, so bit20 is outside it:
+`(00120032 & ~000F0000) | (00020000 & 000F0000) = 00120032`.
+The runner therefore **skips 8C1C0**, preserving bit20 with no normalization
+write, pause or readback for that entry. Native code, masks, order and pauses
+are unchanged; rebuilding the existing live-native library is unnecessary.
+Use a new log filename, e.g. `t5600-apply-live-group-bit20.jsonl`.
